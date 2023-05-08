@@ -3,7 +3,7 @@
 This repository produces two clean datasets for Charging station data based on
 the data provided by the german BNetzA. More info on the source can be found at
 their [Charging Station Website
-(German)](https://www.bundesnetzagentur.de/DE/Fachthemen/ElektrizitaetundGas/E-Mobilitaet/Ladesaeulenkarte/start.html)
+(German)](https://www.bundesnetzagentur.de/DE/Fachthemen/ElektrizitaetundGas/E-Mobilitaet/start.html)
 
 ## Annotated CSV
 
