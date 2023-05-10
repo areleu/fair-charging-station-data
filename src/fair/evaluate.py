@@ -4,6 +4,8 @@ import jsonschema_rs
 from pathlib import Path
 from clean import get_clean_data, FAIRDIR
 from normalise import NORMALIZED_FILENAME
+from os import path, mkdir
+
 METADATA_GENERIC = "https://raw.githubusercontent.com/OpenEnergyPlatform/oemetadata/develop/metadata/{}/schema.json"
 
 METADATA_VERSIONS = ["v130", "v140", "v141", "v150", "v151", "v152"]
@@ -50,7 +52,10 @@ def test_compilance(metadata, version):
             }
             report.append(error_dict)
         name = Path(metadata).stem
-        output_file = Path(f"tests/reports/report_{name}_{version}.json")
+
+        if not path.exists(f"reports"):
+            mkdir(FAIRDIR)
+        output_file = Path(f"reports/report_{name}_{version}.json")
         output_file.parent.mkdir(exist_ok=True, parents=True)
         with open(output_file, "w") as fp:
             json.dump(report, fp,indent=4, sort_keys=False)
