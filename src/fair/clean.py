@@ -27,6 +27,9 @@ def get_clean_data(download_date: tuple = None):
         df["P1 [kW]"] = df["P1 [kW]"].astype("string").str.replace(",", ".").astype(float)
         df["P2 [kW]"]  = df["P2 [kW]"] .astype("string").str.replace(",", ".").astype(float)
         df["P4 [kW]"] = df["P4 [kW]"].astype("string").str.replace(",", ".").str.replace("                 ", "NaN").astype(float)
+        
+        df["Breitengrad"]  = df["Breitengrad"].astype("string").str.replace(",", ".").astype(float)
+        df["Längengrad"]  = df["Längengrad"].astype("string").str.replace(",", ".").astype(float)
         # Replace cleaning steps when the source is changed
 
         df.to_csv(
