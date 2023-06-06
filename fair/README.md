@@ -19,6 +19,3 @@ minimal modification of the source material.
 The normalised data contains the source material structured in such a way that
 can be better handled with relational databases. The charging stations and the
 connection sockets are separated in two different tables.
-## RDF graph
-
-TBA
