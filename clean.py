@@ -1,6 +1,6 @@
 from download import get_raw
 import pandas as pd
-from os import path
+from os import path, mkdir
 
 INPUT_METADATA_FILE = "metadata.yaml"
 
@@ -8,6 +8,9 @@ FAIRDIR = "fair"
 
 
 def get_clean_data(download_date: tuple = None):
+    if not path.exists(FAIRDIR):
+        mkdir(FAIRDIR)
+        
     raw = get_raw(download_date)
     excel = pd.ExcelFile(raw)
 
