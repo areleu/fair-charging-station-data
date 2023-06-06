@@ -1,10 +1,8 @@
 import requests
 from datetime import datetime
 from os import path, mkdir
-from io import BytesIO
-from openpyxl import load_workbook
 
-URL = "https://www.bundesnetzagentur.de/SharedDocs/Downloads/DE/Sachgebiete/Energie/Unternehmen_Institutionen/E_Mobilitaet/Ladesaeulenregister.xlsx?__blob=publicationFile&v=43"
+URL = "https://www.bundesnetzagentur.de/SharedDocs/Downloads/DE/Sachgebiete/Energie/Unternehmen_Institutionen/E_Mobilitaet/Ladesaeulenregister.xlsx?__blob=publicationFile&v=44"
 FILENAME = "bnetza_charging_stations_raw_{MM}_{YYYY}.xlsx"
 DATA_DIRECTORY = "data"
 
@@ -28,9 +26,6 @@ def get_raw(dd_mm_yyyy: tuple = None):
     if not path.exists(DATA_DIRECTORY):
         mkdir(DATA_DIRECTORY)
     if not path.exists(file_path):
-        # raw = BytesIO(download_raw(URL))
-        # wb = load_workbook(raw)
-        # wb.save(file_path)
         raw = download_raw(URL)
         with open(file_path, "wb") as file:
             file.write(raw)
