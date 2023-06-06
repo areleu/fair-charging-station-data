@@ -26,6 +26,7 @@ def get_raw(dd_mm_yyyy: tuple = None):
     if not path.exists(DATA_DIRECTORY):
         mkdir(DATA_DIRECTORY)
     if not path.exists(file_path):
+        raise IOError(f"The BNetzA API is not very realiable when using python. You have to manually download the file and save it as: {file_path}")
         raw = download_raw(URL)
         with open(file_path, "wb") as file:
             file.write(raw)
