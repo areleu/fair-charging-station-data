@@ -5,6 +5,14 @@ the data provided by the german BNetzA. More info on the source can be found at
 their [Charging Station Website
 (German)](https://www.bundesnetzagentur.de/DE/Fachthemen/ElektrizitaetundGas/E-Mobilitaet/start.html)
 
+## Execution order
+
+0. download
+1. clean
+2. annotate
+3. normalise
+4. evaluate
+
 ## Annotated CSV
 
 The source files are in xlsx, which is a limited format. The provider offers csv
