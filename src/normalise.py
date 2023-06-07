@@ -110,16 +110,16 @@ def main():
     }
     annotations_new = deepcopy(annotations)
     annotations_new["name"] = f"{NORMALIZED_FILENAME.format(mm=mm, dd=dd, yyyy=yyyy)}"
-    annotations_new["title"] = "BNetzA Ladesäulenkarte (Normalisiert)"
-    annotations_new["description"] = "Normalisierte datensatz, auf BNetzA Ladesälekarte basiert."
+    annotations_new["title"] = "FAIR Charging Station data (Normalised)"
+    annotations_new["description"] = "Normalised dataset based on the BNetzA charging station data."
     annotations_new["publicationDate"] = f"{yyyy}-{mm}-{dd}"
     annotations_new["resources"] = [column_resource, socket_resource]
-    annotations_new["sources"] = [
-        {"title" : annotations["title"],
-         "description": annotations["description"],
-         "path": annotations["id"],
-         "licenses": annotations["licenses"]}
-    ]
+    # annotations_new["sources"] = [
+    #     {"title" : annotations["title"],
+    #      "description": annotations["description"],
+    #      "path": annotations["id"],
+    #      "licenses": annotations["licenses"]}
+    # ]
 
     dialect1_5 = OEP_V_1_5_Dialect()
     compiled = dialect1_5.compile(annotations_new)
