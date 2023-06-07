@@ -1,6 +1,6 @@
 name: bnetza_charging_stations
 title: FAIR Charging Station data
-id: bnetza_charging_stations
+id: https://www.bundesnetzagentur.de/SharedDocs/Downloads/DE/Sachgebiete/Energie/Unternehmen_Institutionen/E_Mobilitaet/Ladesaeulenregister.xlsx
 description: FAIR version of the charging infrastructure dataset published by the BNetzA.
 language: 
     - "de-DE"

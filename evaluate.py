@@ -37,8 +37,8 @@ def get_metadata(source):
         package =json.load(fp)
     return package
 
-def test_compilance(metadata, version):
-    metadata_object = get_metadata(metadata)
+def test_compilance(metadata_path, version):
+    metadata_object = get_metadata(metadata_path)
     metadata = load_metadata(version)
     validator = jsonschema_rs.JSONSchema(metadata)
     report = []
@@ -51,16 +51,16 @@ def test_compilance(metadata, version):
                 "instance_path": error.instance_path
             }
             report.append(error_dict)
-        name = Path(metadata).stem
+        name = Path(metadata_path).stem
 
         if not path.exists(f"reports"):
-            mkdir(FAIRDIR)
+            mkdir(f"reports")
         output_file = Path(f"reports/report_{name}_{version}.json")
         output_file.parent.mkdir(exist_ok=True, parents=True)
         with open(output_file, "w") as fp:
             json.dump(report, fp,indent=4, sort_keys=False)
 
-        assert valid_schema, f"The file {Path(metadata).name} is not valid agianst oemetadata {version}"
+        assert valid_schema, f"The file {Path(metadata_path).name} is not valid agianst oemetadata {version}"
 
 def main():
     _, filename, (dd, mm, yyyy) = get_clean_data()
