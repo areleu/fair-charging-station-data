@@ -19,6 +19,11 @@ or simply
 pip install pandas requests frictionless
 ```
 
+Each script has to be run with the directory where you want to have the data as current working directory. You run them with python normally, for example:
+
+```bash
+python src/clean.py 
+```
 To get the proper data run the scripts in the following order:
 
 0. download (Data has to be downloaded manually, sorry but the BNetzA website is not fond of automatic requests.)
