@@ -1,4 +1,4 @@
-from annotate import get_clean_data, FAIRDIR, INPUT_METADATA_FILE
+from annotate import get_clean_data, INPUT_METADATA_FILE
 import pandas as pd
 import yaml
 import frictionless as fl
@@ -6,12 +6,16 @@ from collections import OrderedDict
 from copy import deepcopy
 from omi.dialects.oep.dialect import OEP_V_1_5_Dialect
 import json 
+from os import mkdir, path
 
 COLUMN_DATA = "bnetza_charging_columns_{dd}_{mm}_{yyyy}"
 SOCKET_DATA = "bnetza_charging_sockets_{dd}_{mm}_{yyyy}"
 NORMALIZED_FILENAME = "bnetza_charging_stations_normalised_{dd}_{mm}_{yyyy}"
+NORMALISEDIR = "normalised"
 
 def main():
+    if not path.exists(f"{NORMALISEDIR}"):
+        mkdir(NORMALISEDIR)
     df, filename, (dd, mm, yyyy) = get_clean_data()
 
     df.index.name = "id"
@@ -41,9 +45,9 @@ def main():
 
     # export 
     column_filename = COLUMN_DATA.format(dd=dd, mm=mm, yyyy=yyyy)
-    column_data.to_csv(f"{FAIRDIR}/{column_filename}.csv")
+    column_data.to_csv(f"{NORMALISEDIR}/{column_filename}.csv")
     socket_filename = SOCKET_DATA.format(dd=dd, mm=mm, yyyy=yyyy)
-    socket_data.to_csv(f"{FAIRDIR}/{socket_filename}.csv")
+    socket_data.to_csv(f"{NORMALISEDIR}/{socket_filename}.csv")
 
     # Annotate
     # get annotated fields
@@ -52,7 +56,7 @@ def main():
 
     # column data
     # get  file schema
-    column_schema = fl.Schema.describe(f"{FAIRDIR}/{column_filename}.csv", encoding="utf-8")
+    column_schema = fl.Schema.describe(f"{NORMALISEDIR}/{column_filename}.csv", encoding="utf-8")
     column_dict = column_schema.to_dict()
 
     column_fields = OrderedDict(
@@ -77,7 +81,7 @@ def main():
 
     # socket data
     # get file schema
-    socket_schema = fl.Schema.describe(f"{FAIRDIR}/{socket_filename}.csv", encoding="utf-8")
+    socket_schema = fl.Schema.describe(f"{NORMALISEDIR}/{socket_filename}.csv", encoding="utf-8")
     socket_dict = socket_schema.to_dict()
 
     socket_fields = OrderedDict(
@@ -124,7 +128,7 @@ def main():
     dialect1_5 = OEP_V_1_5_Dialect()
     compiled = dialect1_5.compile(annotations_new)
 
-    with open(f"{FAIRDIR}/{NORMALIZED_FILENAME.format(mm=mm, dd=dd, yyyy=yyyy)}.json", "w", encoding="utf8") as output:
+    with open(f"{NORMALISEDIR}/{NORMALIZED_FILENAME.format(mm=mm, dd=dd, yyyy=yyyy)}.json", "w", encoding="utf8") as output:
         json.dump(compiled, output, indent=4, ensure_ascii=False)
         
 if __name__=="__main__":
