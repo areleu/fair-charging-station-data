@@ -13,10 +13,11 @@ SOCKET_DATA = "bnetza_charging_sockets_{dd}_{mm}_{yyyy}"
 NORMALIZED_FILENAME = "bnetza_charging_stations_normalised_{dd}_{mm}_{yyyy}"
 NORMALISEDIR = "normalised"
 
-def main():
+def get_normalised_data(download_date: tuple = None):
+
     if not path.exists(f"{NORMALISEDIR}"):
         mkdir(NORMALISEDIR)
-    df, filename, (dd, mm, yyyy) = get_clean_data()
+    df, filename, (dd, mm, yyyy) = get_clean_data(download_date)
 
     df.index.name = "id"
 
@@ -43,11 +44,8 @@ def main():
     socket_data.drop(columns="index", inplace=True)
     socket_data.index.name = "id"
 
-    # export 
-    column_filename = COLUMN_DATA.format(dd=dd, mm=mm, yyyy=yyyy)
-    column_data.to_csv(f"{NORMALISEDIR}/{column_filename}.csv")
     socket_filename = SOCKET_DATA.format(dd=dd, mm=mm, yyyy=yyyy)
-    socket_data.to_csv(f"{NORMALISEDIR}/{socket_filename}.csv")
+    column_filename = COLUMN_DATA.format(dd=dd, mm=mm, yyyy=yyyy)
 
     # Annotate
     # get annotated fields
@@ -118,18 +116,21 @@ def main():
     annotations_new["description"] = "Normalised dataset based on the BNetzA charging station data."
     annotations_new["publicationDate"] = f"{yyyy}-{mm}-{dd}"
     annotations_new["resources"] = [column_resource, socket_resource]
-    # annotations_new["sources"] = [
-    #     {"title" : annotations["title"],
-    #      "description": annotations["description"],
-    #      "path": annotations["id"],
-    #      "licenses": annotations["licenses"]}
-    # ]
 
     dialect1_5 = OEP_V_1_5_Dialect()
-    compiled = dialect1_5.compile(annotations_new)
+    compiled_metadata = dialect1_5.compile(annotations_new)
+
+    return column_data, socket_data, column_filename, socket_filename, compiled_metadata, (dd, mm, yyyy)
+
+def main():
+
+    column_data, socket_data, column_filename, socket_filename, compiled_metadata, (dd, mm, yyyy) = get_normalised_data()
+    # export 
+    column_data.to_csv(f"{NORMALISEDIR}/{column_filename}.csv")
+    socket_data.to_csv(f"{NORMALISEDIR}/{socket_filename}.csv")
 
     with open(f"{NORMALISEDIR}/{NORMALIZED_FILENAME.format(mm=mm, dd=dd, yyyy=yyyy)}.json", "w", encoding="utf8") as output:
-        json.dump(compiled, output, indent=4, ensure_ascii=False)
+        json.dump(compiled_metadata, output, indent=4, ensure_ascii=False)
         
 if __name__=="__main__":
     main()

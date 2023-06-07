@@ -9,11 +9,11 @@ from os import mkdir, path
 INPUT_METADATA_FILE = "metadata.yaml"
 
 
-def annotate():
+def annotate(download_date: tuple = None):
     if not path.exists(f"{FAIRDIR}"):
         mkdir(FAIRDIR)
 
-    _, filename, (dd, mm, yyyy) = get_clean_data()  # If you want a specific date write the it in the forma (dd, mm, yyyy) ex: (1,2,2023)
+    df, filename, (dd, mm, yyyy) = get_clean_data(download_date)  # If you want a specific date write the it in the forma (dd, mm, yyyy) ex: (1,2,2023)
 
     # get current file schema
     schema = fl.Schema.describe(f"{FAIRDIR}/{filename}.csv")
@@ -53,14 +53,16 @@ def annotate():
     annotations["publicationDate"] = f"{yyyy}-{mm}-{dd}"
 
     dialect1_5 = OEP_V_1_5_Dialect()
-    compiled = dialect1_5.compile(annotations)
-    with open(f"{FAIRDIR}/{filename}.json", "w", encoding="utf8") as output:
-        json.dump(compiled, output, indent=4, ensure_ascii=False)
+    compiled_metadata = dialect1_5.compile(annotations)
+
+    return df, filename, compiled_metadata, (dd, mm, yyyy)
+
 
 
 def main():
-    annotate()
+    _, filename, compiled_metadata, (_, _, _) = annotate()
 
-
+    with open(f"{FAIRDIR}/{filename}.json", "w", encoding="utf8") as output:
+        json.dump(compiled_metadata, output, indent=4, ensure_ascii=False)
 if __name__ == "__main__":
     main()
