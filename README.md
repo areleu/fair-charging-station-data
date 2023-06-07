@@ -5,9 +5,23 @@ the data provided by the german BNetzA. More info on the source can be found at
 their [Charging Station Website
 (German)](https://www.bundesnetzagentur.de/DE/Fachthemen/ElektrizitaetundGas/E-Mobilitaet/start.html). Just in case it is not clear, no data is provided in this repository, you have to download it yourself. Run The download script once, it will throw an error on where to store the data to use this tool properly.
 
-## Execution order
+## Execution
 
-0. download
+This script should theoretically work with any version of python able to run pandas and frictionless. If it is not obvious, you have to install the requirements.txt in your python environment.
+
+```bash
+pip install -r requirements.txt
+```
+
+or simply 
+
+```bash
+pip install pandas requests frictionless
+```
+
+To get the proper data run the scripts in the following order:
+
+0. download (Data has to be downloaded manually, sorry but the BNetzA website is not fond of automatic requests.)
 1. clean
 2. annotate
 3. normalise
