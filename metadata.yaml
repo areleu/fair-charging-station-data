@@ -1,0 +1,159 @@
+name: bnetza_charging_stations
+title: FAIR Charging Station data
+id: bnetza_charging_stations
+description: FAIR version of the charging infrastructure dataset published by the BNetzA.
+language: 
+    - "de-DE"
+    - "en-GB"
+subject: 
+    - "name": "vehicle charging station"
+      "path": "http://openenergy-platform.org/ontology/oeo/OEO_00320040"
+keywords:
+    - "electric vehicles"
+    - "charging stations"
+    - "mobility"
+spatial:
+    location: Germany
+    extent: Germany
+    resolution: point
+sources:
+    - title: BNetzA Ladesäulenkarte
+      description: Die Bundesnetzagentur veröffentlicht die im Rahmen der Ladesäulenverordnung (LSV) gemeldeten Daten zur öffentlich zugänglichen Ladeinfrastruktur in Deutschland.
+      path: https://www.bundesnetzagentur.de/SharedDocs/Downloads/DE/Sachgebiete/Energie/Unternehmen_Institutionen/E_Mobilitaet/Ladesaeulenregister.xlsx
+      licenses:
+          - name: CC BY 4.0
+            title: Attribution 4.0 International
+            path: https://creativecommons.org/licenses/by/4.0
+            attribution: © Bundesnetzagentur - 2023 
+            instruction: You are free to copy and redistribute the material in any medium or format. You are free to remix, transform, and build upon the material for any purpose, even commercially.
+licenses:
+    - name: CC BY 4.0
+      title: Attribution 4.0 International
+      path: https://creativecommons.org/licenses/by/4.0
+      attribution: © Bundesnetzagentur - 2023 
+      instruction: You are free to copy and redistribute the material in any medium or format. You are free to remix, transform, and build upon the material for any purpose, even commercially. 
+resources:
+    - profile: tabular-data-resource
+      name: Ladesaeulenregister
+      path: Ladesaeulenregister
+      format: xlsx
+      schema:
+          fields:
+            - name: Betreiber
+              isAbout: 
+                - name: organisation
+                  path: http://openenergy-platform.org/ontology/oeo/OEO_00030022
+            - name: Straße
+              isAbout: 
+                - name: street name
+                  path: https://spec.edmcouncil.org/fibo/ontology/FND/Places/Addresses/StreetName
+            - name: Hausnummer
+              isAbout: 
+                - name: primary address number
+                  path: https://spec.edmcouncil.org/fibo/ontology/FND/Places/Addresses/PrimaryAddressNumber
+            - name: Adresszusatz
+              isAbout: 
+                - name: supplemental address component
+                  path: https://spec.edmcouncil.org/fibo/ontology/FND/Places/Addresses/SupplementalAddressComponent
+            - name: Postleitzahl
+              isAbout: 
+                - name: postcode
+                  path: https://spec.edmcouncil.org/fibo/ontology/FND/Places/Addresses/Postcode
+            - name: Ort
+              isAbout: 
+                - name: municipality
+                  path: https://spec.edmcouncil.org/fibo/ontology/FND/Places/Locations/Municipality
+            - name: Bundesland
+              isAbout: 
+                - name: federal state
+                  path: https://spec.edmcouncil.org/fibo/ontology/FND/Places/Locations/FederalState
+            - name: Kreis/kreisfreie Stadt
+              isAbout: 
+                - name: county
+                  path: https://spec.edmcouncil.org/fibo/ontology/FND/Places/Locations/County
+            - name: Breitengrad
+              isAbout: 
+                - name: latitude
+                  path: https://www.w3.org/2003/01/geo/wgs84_pos#latitude
+            - name: Längengrad
+              isAbout: 
+                - name: longitude
+                  path: https://www.w3.org/2003/01/geo/wgs84_pos#longitude
+            - name: Inbetriebnahmedatum
+              isAbout: 
+                - name: comissioning date
+                  path: https://openenergy-platform.org/missing_term
+            - name: Anschlussleistung
+              unit: kW
+              isAbout: 
+                - name: declared net capacity
+                  path: http://openenergy-platform.org/ontology/oeo/OEO_00230002
+            - name: Art der Ladeeinrichung
+              isAbout: 
+                - name: type of column
+                  path: https://openenergy-platform.org/missing_term
+              valueReference:
+                - value: Normalladeeinrichtung
+                  name: normal charging
+                  path: https://openenergy-platform.org/missing_term
+                - value: Schnellladeeinrichtung
+                  name: fast charging
+                  path: https://openenergy-platform.org/missing_term
+            - name: Anzahl Ladepunkte
+              isAbout: 
+                - name: number of chargers
+                  path: https://openenergy-platform.org/missing_term
+            - name: Steckertypen1
+              isAbout: 
+                - name: socket type
+                  path: https://openenergy-platform.org/missing_term
+            - name: P1 [kW]
+              unit: kW
+              isAbout: 
+                - name: power capacity
+                  path: http://openenergy-platform.org/ontology/oeo/OEO_00010257
+            - name: Public Key1
+              isAbout: 
+                - name: public key
+                  path: https://openenergy-platform.org/missing_term
+            - name: Steckertypen2
+              isAbout: 
+                - name: socket type
+                  path: https://openenergy-platform.org/missing_term
+            - name: P2 [kW]
+              unit: kW
+              isAbout: 
+                - name: power capacity
+                  path: http://openenergy-platform.org/ontology/oeo/OEO_00010257
+            - name: Public Key2
+              isAbout: 
+                - name: public key
+                  path: https://openenergy-platform.org/missing_term
+            - name: Steckertypen3
+              isAbout: 
+                - name: socket type
+                  path: https://openenergy-platform.org/missing_term
+            - name: P3 [kW]
+              unit: kW
+              isAbout: 
+                - name: power capacity
+                  path: http://openenergy-platform.org/ontology/oeo/OEO_00010257
+            - name: Public Key3
+              isAbout: 
+                - name: public key
+                  path: https://openenergy-platform.org/missing_term
+            - name: Steckertypen4
+              isAbout: 
+                - name: socket type
+                  path: https://openenergy-platform.org/missing_term
+            - name: P4 [kW]
+              unit: kW
+              isAbout: 
+                - name: power capacity
+                  path: http://openenergy-platform.org/ontology/oeo/OEO_00010257
+            - name: Public Key4
+              isAbout: 
+                - name: public key
+                  path: https://openenergy-platform.org/missing_term
+
+      
