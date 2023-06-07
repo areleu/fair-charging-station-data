@@ -47,6 +47,8 @@ def annotate():
     annotations["resources"][0]["encoding"] = "UTF-8"
     annotations["resources"][0]["schema"]["fields"] = values
 
+    # Update name
+    annotations["name"] = annotations["name"] + f"_{dd}_{mm}_{yyyy}"
     # Update publication date
     annotations["publicationDate"] = f"{yyyy}-{mm}-{dd}"
 
