@@ -103,6 +103,32 @@ def get_renamed_normalised(download_date: tuple = None):
 def get_renamed_annotated():
     station_data, station_filename, station_compiled_metadata, (dd, mm, yyyy) = annotate()
 
+    station_data = station_data.rename(columns=COLUMN_RENAME)
+
+    for k, v in CONTENT_RENAME_TYPE.items():
+        station_data["column_type"] = station_data["column_type"].str.replace(k,v)
+
+    station_resource_fields = station_compiled_metadata["resources"][0]["schema"]["fields"]
+    new_fields = []
+
+    for field in station_resource_fields:
+        old_name = field["name"] 
+        field["name"] = COLUMN_RENAME.get(old_name, old_name)
+        if "valueReference" in field.keys():
+            new_refs = []
+            for ref in field["valueReference"]:
+                nr = ref
+                nr["value"] = CONTENT_RENAME_TYPE[nr["value"]]
+                new_refs.append(nr)
+            field["valueReference"] = new_refs
+        new_fields.append(field)
+    assert set(f["name"] for f in new_fields) == set(list(station_data.columns)), "Station column names in output do not match"
+    
+    station_compiled_metadata["resources"][0]["schema"]["fields"] = new_fields
+
+    station_compiled_metadata["name"] = OEP_REGULAR_FILEANAME.format(mm=mm, dd=dd, yyyy=yyyy)
+    station_compiled_metadata["id"] = OEP_REGULAR_FILEANAME.format(mm=mm, dd=dd, yyyy=yyyy)
+    station_compiled_metadata["description"] = station_compiled_metadata["description"] + " Column names translated to english."
     return station_data, station_filename, station_compiled_metadata, (dd, mm, yyyy)
 
 def main():
@@ -116,7 +142,12 @@ def main():
     with open(f"{OEPDIR}/{OEP_NORMAL_FILENAME.format(mm=mm, dd=dd, yyyy=yyyy)}.json", "w", encoding="utf8") as output:
         json.dump(normalised_compiled_metadata, output, indent=4, ensure_ascii=False)
 
-    # station_data, station_filename, station_compiled_metadata, (_, _, _) = annotate()
+    station_data, station_filename, station_compiled_metadata, (dd, mm, yyyy) = get_renamed_annotated()
+
+    station_data.to_csv(f"{OEPDIR}/{station_filename}.csv", index=False)
+
+    with open(f"{OEPDIR}/{OEP_REGULAR_FILEANAME.format(mm=mm, dd=dd, yyyy=yyyy)}.json", "w", encoding="utf8") as output:
+        json.dump(station_compiled_metadata, output, indent=4, ensure_ascii=False)
 
 if __name__ == "__main__":
     main()

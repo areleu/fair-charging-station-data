@@ -3,6 +3,7 @@
 # 12.06.2023
 
 - Added working renaming script with OEP compatibility in mind.
+- Renaming for non-normalised dataset is also functional
 ## 07.06.2023
 
 - Added structure of renaming script
