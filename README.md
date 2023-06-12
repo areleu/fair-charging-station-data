@@ -16,7 +16,7 @@ pip install -r requirements.txt
 or simply 
 
 ```bash
-pip install pandas requests frictionless
+pip install pandas requests frictionless omi openpyxl jsonschema_rs
 ```
 
 Each script has to be run with the directory where you want to have the data as current working directory. You run them with python normally, for example:
