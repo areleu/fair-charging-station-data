@@ -1,5 +1,8 @@
 # CHANGELOG
 
+# 12.06.2023
+
+- Added working renaming script with OEP compatibility in mind.
 ## 07.06.2023
 
 - Added structure of renaming script
