@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 07.06.2023
+
+- Added structure of renaming script
+- brought python files back to the src folder
 ## 06.06.2023
 
 - Separated of other project components
