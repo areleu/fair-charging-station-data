@@ -30,7 +30,9 @@ To get the proper data run the scripts in the following order:
 1. clean
 2. annotate
 3. normalise
-4. evaluate
+4. rename
+5. evaluate
+6. publish
 
 ## Annotated CSV
 
