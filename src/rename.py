@@ -100,8 +100,8 @@ def get_renamed_normalised(download_date: tuple = None):
     
     return column_data, socket_data, new_column_filename, new_socket_filename, normalised_compiled_metadata, (dd, mm, yyyy)
 
-def get_renamed_annotated():
-    station_data, station_filename, station_compiled_metadata, (dd, mm, yyyy) = annotate()
+def get_renamed_annotated(download_date: tuple = None):
+    station_data, station_filename, station_compiled_metadata, (dd, mm, yyyy) = annotate(download_date)
 
     station_data = station_data.rename(columns=COLUMN_RENAME)
 
