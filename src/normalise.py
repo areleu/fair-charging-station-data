@@ -14,9 +14,6 @@ NORMALIZED_FILENAME = "bnetza_charging_stations_normalised_{dd}_{mm}_{yyyy}"
 NORMALISEDIR = "normalised"
 
 def get_normalised_data(download_date: tuple = None):
-
-    if not path.exists(f"{NORMALISEDIR}"):
-        mkdir(NORMALISEDIR)
     df, filename, (dd, mm, yyyy) = get_clean_data(download_date)
 
     df.index.name = "id"
@@ -88,9 +85,10 @@ def get_normalised_data(download_date: tuple = None):
 
     reference_fields = {"Steckertypen1": "Steckertypen", "P1 [kW]":"Leistungskapazität", "Public Key1":"PublicKey"}
     annotation_fields = {f["name"]: f for f in annotations["resources"][0]["schema"]["fields"] if f["name"] in reference_fields.keys()}
-
+    
     for k,v in annotation_fields.items():
         socket_fields[reference_fields[k]].update(v)
+        socket_fields[reference_fields[k]]["name"] = reference_fields[k]
     socket_fields_list = [v for v in socket_fields.values()]
     socket_resource = {
         "profile": "tabular-data-resource",
@@ -126,6 +124,10 @@ def main():
 
     column_data, socket_data, column_filename, socket_filename, compiled_metadata, (dd, mm, yyyy) = get_normalised_data()
     # export 
+
+    if not path.exists(f"{NORMALISEDIR}"):
+        mkdir(NORMALISEDIR)
+
     column_data.to_csv(f"{NORMALISEDIR}/{column_filename}.csv")
     socket_data.to_csv(f"{NORMALISEDIR}/{socket_filename}.csv")
 
