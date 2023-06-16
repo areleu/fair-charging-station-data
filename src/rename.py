@@ -34,6 +34,8 @@ from annotate import annotate
 import json
 from os import mkdir, path
 
+DEBUG = True
+
 OEPDIR = "oep"
 OEP_NORMAL_FILENAME = "bnetza_charging_stations_normalised_{dd}_{mm}_{yyyy}"
 OEP_REGULAR_FILEANAME = "bnetza_charging_stations_{dd}_{mm}_{yyyy}"
@@ -76,37 +78,19 @@ CONTENT_RENAME_TYPE = {
 }
 
 COLUMN_DATATYPE = {
-    "Betreiber": "varchar(120)",
-    "Straße" : "varchar(50)",
-    "Hausnummer": "varchar(20)",
-    "Adresszusatz": "varchar(300)",
     "Postleitzahl": "integer",
-    "Ort": "varchar(40)",
-    "Bundesland": "varchar(30)",
-    "Kreis/kreisfreie Stadt": "varchar(50)",
     "Breitengrad": "float",
     "Längengrad": "float",
-    "Inbetriebnahmedatum": "varchar(20)",
     "Anschlussleistung": "float",
-    "Art der Ladeeinrichung": "varchar(10)",
     "Anzahl Ladepunkte": "integer",
-    "Steckertypen1": "varchar(80)",
     "P1 [kW]": "float",
-    "Public Key1": "varchar(400)",
-    "Steckertypen2": "varchar(80)",
     "P2 [kW]": "float",
-    "Public Key2": "varchar(400)",
-    "Steckertypen3": "varchar(80)",
     "P3 [kW]": "float",
-    "Public Key3": "varchar(400)",
-    "Steckertypen4": "varchar(80)",
     "P4 [kW]": "float",
-    "Public Key4": "varchar(400)",
-    "Steckertypen": "varchar(80)",
     "Leistungskapazität": "float",
-    "PublicKey": "varchar(400)",
     "id": "integer",
-    "column_id": "integer"
+    "column_id": "integer",
+    "Inbetriebnahmedatum": "date"
 }
 
 def get_renamed_normalised(download_date: tuple = None, oep=True):
@@ -124,8 +108,8 @@ def get_renamed_normalised(download_date: tuple = None, oep=True):
     for field in column_resource_fields:
         old_name = field["name"]
         field["name"] = COLUMN_RENAME.get(old_name, old_name)
-        # if oep:
-        #     field["type"] = COLUMN_DATATYPE[old_name]
+        if oep:
+            field["type"] = COLUMN_DATATYPE.get(old_name, field.get("type", "string"))
         if "valueReference" in field.keys():
             new_refs = []
             for ref in field["valueReference"]:
@@ -144,16 +128,16 @@ def get_renamed_normalised(download_date: tuple = None, oep=True):
 
     if oep:
         normalised_compiled_metadata["resources"][0]["dialect"] = { "delimiter": ",", "decimalSeparator": "."}
-    #     normalised_compiled_metadata["resources"][0]["format"] = "PostgreSQL"
-    #     normalised_compiled_metadata["resources"][0].pop("encoding")
+        normalised_compiled_metadata["resources"][0]["format"] = "PostgreSQL"
+        normalised_compiled_metadata["resources"][0].pop("encoding")
 
     # Socket resource renaming
     socket_resource_fields = normalised_compiled_metadata["resources"][1]["schema"]["fields"]
     new_fields_socket = []
     for field in socket_resource_fields:
         old_name = field["name"]
-        # if oep:
-        #     field["type"] = COLUMN_DATATYPE[old_name]
+        if oep:
+            field["type"] = COLUMN_DATATYPE.get(old_name, field.get("type", "string"))
         field["name"] = COLUMN_RENAME.get(old_name, old_name)
         new_fields_socket.append(field)
 
@@ -170,8 +154,8 @@ def get_renamed_normalised(download_date: tuple = None, oep=True):
 
     if oep:
         normalised_compiled_metadata["resources"][1]["dialect"] = { "delimiter": ",", "decimalSeparator": "."}
-    #     normalised_compiled_metadata["resources"][1]["format"] = "PostgreSQL"
-    #     normalised_compiled_metadata["resources"][1].pop("encoding")
+        normalised_compiled_metadata["resources"][1]["format"] = "PostgreSQL"
+        normalised_compiled_metadata["resources"][1].pop("encoding")
 
     normalised_compiled_metadata["name"] = OEP_NORMAL_FILENAME.format(mm=mm, dd=dd, yyyy=yyyy)
     normalised_compiled_metadata["id"] = OEP_NORMAL_FILENAME.format(mm=mm, dd=dd, yyyy=yyyy)
@@ -200,8 +184,8 @@ def get_renamed_annotated(download_date: tuple = None, oep=True):
     for field in station_resource_fields:
         old_name = field["name"]
         field["name"] = COLUMN_RENAME.get(old_name, old_name)
-        # if oep:
-        #     field["type"] = COLUMN_DATATYPE[old_name]
+        if oep:
+            field["type"] = COLUMN_DATATYPE.get(old_name, field.get("type", "string"))
         if "valueReference" in field.keys():
             new_refs = []
             for ref in field["valueReference"]:
@@ -220,8 +204,8 @@ def get_renamed_annotated(download_date: tuple = None, oep=True):
         station_compiled_metadata["resources"][0]["schema"]["primaryKey"] = ["id"]
         station_compiled_metadata["resources"][0]["schema"]["foreignKeys"] = []
         station_compiled_metadata["resources"][0]["dialect"] = { "delimiter": ",", "decimalSeparator": "."}
-        # station_compiled_metadata["resources"][0]["format"] = "PostgreSQL"
-        # station_compiled_metadata["resources"][0].pop("encoding")
+        station_compiled_metadata["resources"][0]["format"] = "PostgreSQL"
+        station_compiled_metadata["resources"][0].pop("encoding")
     station_compiled_metadata["resources"][0]["name"] = "model_draft." + station_compiled_metadata["resources"][0]["name"] if oep else station_compiled_metadata["resources"][0]["name"]
 
     station_compiled_metadata["name"] = OEP_REGULAR_FILEANAME.format(mm=mm, dd=dd, yyyy=yyyy)
@@ -233,15 +217,16 @@ def main():
     column_data, socket_data, column_filename, socket_filename, normalised_compiled_metadata, (dd, mm, yyyy) = get_renamed_normalised()
     if not path.exists(f"{OEPDIR}"):
         mkdir(OEPDIR)
+    if not DEBUG:
+        column_data.to_csv(f"{OEPDIR}/{column_filename}.csv")
+        socket_data.to_csv(f"{OEPDIR}/{socket_filename}.csv")
 
-    column_data.to_csv(f"{OEPDIR}/{column_filename}.csv")
-    socket_data.to_csv(f"{OEPDIR}/{socket_filename}.csv")
-
-    with open(f"{OEPDIR}/{OEP_NORMAL_FILENAME.format(mm=mm, dd=dd, yyyy=yyyy)}.json", "w", encoding="utf8") as output:
-        json.dump(normalised_compiled_metadata, output, indent=4, ensure_ascii=False)
+        with open(f"{OEPDIR}/{OEP_NORMAL_FILENAME.format(mm=mm, dd=dd, yyyy=yyyy)}.json", "w", encoding="utf8") as output:
+            json.dump(normalised_compiled_metadata, output, indent=4, ensure_ascii=False)
 
     station_data, station_filename, station_compiled_metadata, (dd, mm, yyyy) = get_renamed_annotated()
-
+    if DEBUG:
+        station_data = station_data.head(10)
     station_data.to_csv(f"{OEPDIR}/{station_filename}.csv", index=True)
 
     with open(f"{OEPDIR}/{OEP_REGULAR_FILEANAME.format(mm=mm, dd=dd, yyyy=yyyy)}.json", "w", encoding="utf8") as output:
