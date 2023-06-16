@@ -1,5 +1,9 @@
 # CHANGELOG
 
+# 16.06.2023
+
+- Added the option to make the renamed dataset partially compatible with the OEP. Missing datatypes.
+
 # 12.06.2023
 
 - Added working renaming script with OEP compatibility in mind.

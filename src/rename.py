@@ -4,8 +4,8 @@ import json
 from os import mkdir, path
 
 OEPDIR = "oep"
-OEP_NORMAL_FILENAME = "bnetza_charging_stations_normalised_oep_{dd}_{mm}_{yyyy}"
-OEP_REGULAR_FILEANAME = "bnetza_charging_stations_oep_{dd}_{mm}_{yyyy}"
+OEP_NORMAL_FILENAME = "bnetza_charging_stations_normalised_{dd}_{mm}_{yyyy}"
+OEP_REGULAR_FILEANAME = "bnetza_charging_stations_{dd}_{mm}_{yyyy}"
 
 COLUMN_RENAME = {
     "Betreiber": "operator",
@@ -44,7 +44,7 @@ CONTENT_RENAME_TYPE = {
     "Schnellladeeinrichtung": "fast"
 }
 
-def get_renamed_normalised(download_date: tuple = None):
+def get_renamed_normalised(download_date: tuple = None, oep=True):
     column_data, socket_data, _, _, normalised_compiled_metadata, (dd, mm, yyyy) = get_normalised_data(download_date)
 
     column_data = column_data.rename(columns=COLUMN_RENAME)
@@ -57,7 +57,7 @@ def get_renamed_normalised(download_date: tuple = None):
     column_resource_fields = normalised_compiled_metadata["resources"][0]["schema"]["fields"]
     new_fields_column = []
     for field in column_resource_fields:
-        old_name = field["name"] 
+        old_name = field["name"]
         field["name"] = COLUMN_RENAME.get(old_name, old_name)
         if "valueReference" in field.keys():
             new_refs = []
@@ -70,37 +70,37 @@ def get_renamed_normalised(download_date: tuple = None):
     assert set(f["name"] for f in new_fields_column) == set(list(column_data.columns) + list(column_data.index.names)), "Columns column names in output do not match"
     normalised_compiled_metadata["resources"][0]["schema"]["fields"] = new_fields_column
 
-    new_column_filename = f"bnetza_charging_columns_oep_{dd}_{mm}_{yyyy}"
+    new_column_filename = f"bnetza_charging_columns_{dd}_{mm}_{yyyy}"
 
-    normalised_compiled_metadata["resources"][0]["name"] = new_column_filename
-    normalised_compiled_metadata["resources"][0]["path"] = new_column_filename
-    
+    normalised_compiled_metadata["resources"][0]["name"] = "model_draft." + new_column_filename if oep else new_column_filename
+    normalised_compiled_metadata["resources"][0]["path"] = f"{new_column_filename}.csv"
+
     # Socket resource renaming
     socket_resource_fields = normalised_compiled_metadata["resources"][1]["schema"]["fields"]
     new_fields_socket = []
     for field in socket_resource_fields:
-        old_name = field["name"] 
+        old_name = field["name"]
         field["name"] = COLUMN_RENAME.get(old_name, old_name)
         new_fields_socket.append(field)
-        
-    
-    new_socket_filename = f"bnetza_charging_sockets_oep_{dd}_{mm}_{yyyy}"
+
+
+    new_socket_filename = f"bnetza_charging_sockets_{dd}_{mm}_{yyyy}"
 
     assert set(f["name"] for f in new_fields_socket) == set(list(socket_data.columns) + list(socket_data.index.names)), "Socket column names in output do not match"
-    
+
     normalised_compiled_metadata["resources"][1]["schema"]["fields"] = new_fields_socket
     normalised_compiled_metadata["resources"][1]["schema"]["foreignKeys"][0]["reference"]["resource"] = new_column_filename
 
-    normalised_compiled_metadata["resources"][1]["name"] = new_socket_filename
-    normalised_compiled_metadata["resources"][1]["path"] = new_socket_filename
+    normalised_compiled_metadata["resources"][1]["name"] = "model_draft."+ new_socket_filename if oep else new_socket_filename
+    normalised_compiled_metadata["resources"][1]["path"] = f"{new_socket_filename}.csv"
 
     normalised_compiled_metadata["name"] = OEP_NORMAL_FILENAME.format(mm=mm, dd=dd, yyyy=yyyy)
     normalised_compiled_metadata["id"] = OEP_NORMAL_FILENAME.format(mm=mm, dd=dd, yyyy=yyyy)
     normalised_compiled_metadata["description"] = normalised_compiled_metadata["description"] + " Column names translated to english."
-    
+
     return column_data, socket_data, new_column_filename, new_socket_filename, normalised_compiled_metadata, (dd, mm, yyyy)
 
-def get_renamed_annotated(download_date: tuple = None):
+def get_renamed_annotated(download_date: tuple = None, oep=True):
     station_data, station_filename, station_compiled_metadata, (dd, mm, yyyy) = annotate(download_date)
 
     station_data = station_data.rename(columns=COLUMN_RENAME)
@@ -108,11 +108,18 @@ def get_renamed_annotated(download_date: tuple = None):
     for k, v in CONTENT_RENAME_TYPE.items():
         station_data["column_type"] = station_data["column_type"].str.replace(k,v)
 
+    if oep:
+        station_data.index.name = "id"
+
+
     station_resource_fields = station_compiled_metadata["resources"][0]["schema"]["fields"]
-    new_fields = []
+    if oep:
+        new_fields = [{"name": "id", "type": "integer", "description": "Unique ID" }]
+    else:
+        new_fields = []
 
     for field in station_resource_fields:
-        old_name = field["name"] 
+        old_name = field["name"]
         field["name"] = COLUMN_RENAME.get(old_name, old_name)
         if "valueReference" in field.keys():
             new_refs = []
@@ -122,9 +129,16 @@ def get_renamed_annotated(download_date: tuple = None):
                 new_refs.append(nr)
             field["valueReference"] = new_refs
         new_fields.append(field)
-    assert set(f["name"] for f in new_fields) == set(list(station_data.columns)), "Station column names in output do not match"
-    
+        column_set = set(list(station_data.columns))
+        if oep:
+            column_set.add("id")
+    assert set(f["name"] for f in new_fields) ==column_set, "Station column names in output do not match"
+
     station_compiled_metadata["resources"][0]["schema"]["fields"] = new_fields
+    if oep:
+        station_compiled_metadata["resources"][0]["schema"]["primaryKey"] = ["id"]
+        station_compiled_metadata["resources"][0]["schema"]["foreignKeys"] = []
+    station_compiled_metadata["resources"][0]["name"] = "model_draft." + station_compiled_metadata["resources"][0]["name"] if oep else station_compiled_metadata["resources"][0]["name"]
 
     station_compiled_metadata["name"] = OEP_REGULAR_FILEANAME.format(mm=mm, dd=dd, yyyy=yyyy)
     station_compiled_metadata["id"] = OEP_REGULAR_FILEANAME.format(mm=mm, dd=dd, yyyy=yyyy)
@@ -144,7 +158,7 @@ def main():
 
     station_data, station_filename, station_compiled_metadata, (dd, mm, yyyy) = get_renamed_annotated()
 
-    station_data.to_csv(f"{OEPDIR}/{station_filename}.csv", index=False)
+    station_data.to_csv(f"{OEPDIR}/{station_filename}.csv", index=True)
 
     with open(f"{OEPDIR}/{OEP_REGULAR_FILEANAME.format(mm=mm, dd=dd, yyyy=yyyy)}.json", "w", encoding="utf8") as output:
         json.dump(station_compiled_metadata, output, indent=4, ensure_ascii=False)

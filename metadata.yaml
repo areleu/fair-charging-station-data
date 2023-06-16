@@ -2,10 +2,10 @@ name: bnetza_charging_stations
 title: FAIR Charging Station data
 id: bnetza_charging_stations
 description: FAIR version of the charging infrastructure dataset published by the BNetzA.
-language: 
+language:
     - "de-DE"
     - "en-GB"
-subject: 
+subject:
     - "name": "vehicle charging station"
       "path": "http://openenergy-platform.org/ontology/oeo/OEO_00320040"
 keywords:
@@ -24,14 +24,14 @@ sources:
           - name: CC BY 4.0
             title: Attribution 4.0 International
             path: https://creativecommons.org/licenses/by/4.0
-            attribution: © Bundesnetzagentur - 2023 
+            attribution: © Bundesnetzagentur - 2023
             instruction: You are free to copy and redistribute the material in any medium or format. You are free to remix, transform, and build upon the material for any purpose, even commercially.
 licenses:
     - name: CC BY 4.0
       title: Attribution 4.0 International
       path: https://creativecommons.org/licenses/by/4.0
-      attribution: © Bundesnetzagentur - 2023 
-      instruction: You are free to copy and redistribute the material in any medium or format. You are free to remix, transform, and build upon the material for any purpose, even commercially. 
+      attribution: © Bundesnetzagentur - 2023
+      instruction: You are free to copy and redistribute the material in any medium or format. You are free to remix, transform, and build upon the material for any purpose, even commercially.
 resources:
     - profile: tabular-data-resource
       name: Ladesaeulenregister
@@ -40,56 +40,69 @@ resources:
       schema:
           fields:
             - name: Betreiber
-              isAbout: 
+              description: Organisation behind the operation of the station.
+              isAbout:
                 - name: organisation
                   path: http://openenergy-platform.org/ontology/oeo/OEO_00030022
             - name: Straße
-              isAbout: 
+              description: Street of the station address.
+              isAbout:
                 - name: street name
                   path: https://spec.edmcouncil.org/fibo/ontology/FND/Places/Addresses/StreetName
             - name: Hausnummer
-              isAbout: 
+              description: Address number of the station.
+              isAbout:
                 - name: primary address number
                   path: https://spec.edmcouncil.org/fibo/ontology/FND/Places/Addresses/PrimaryAddressNumber
             - name: Adresszusatz
-              isAbout: 
+              description: Supplemental address information
+              isAbout:
                 - name: supplemental address component
                   path: https://spec.edmcouncil.org/fibo/ontology/FND/Places/Addresses/SupplementalAddressComponent
             - name: Postleitzahl
-              isAbout: 
+              description: Postal code.
+              isAbout:
                 - name: postcode
                   path: https://spec.edmcouncil.org/fibo/ontology/FND/Places/Addresses/Postcode
             - name: Ort
-              isAbout: 
+              description: Municipality or city.
+              isAbout:
                 - name: municipality
                   path: https://spec.edmcouncil.org/fibo/ontology/FND/Places/Locations/Municipality
             - name: Bundesland
-              isAbout: 
+              description: Federal state.
+              isAbout:
                 - name: federal state
                   path: https://spec.edmcouncil.org/fibo/ontology/FND/Places/Locations/FederalState
             - name: Kreis/kreisfreie Stadt
-              isAbout: 
+              description: County.
+              isAbout:
                 - name: county
                   path: https://spec.edmcouncil.org/fibo/ontology/FND/Places/Locations/County
             - name: Breitengrad
-              isAbout: 
+              description: Latitude in the WSG84 reference system.
+              isAbout:
                 - name: latitude
                   path: https://www.w3.org/2003/01/geo/wgs84_pos#latitude
             - name: Längengrad
-              isAbout: 
+              description: Longitude in the WSG84 reference system
+              isAbout:
                 - name: longitude
                   path: https://www.w3.org/2003/01/geo/wgs84_pos#longitude
             - name: Inbetriebnahmedatum
-              isAbout: 
+              description: Comissioning date of the station.
+              isAbout:
                 - name: comissioning date
                   path: https://openenergy-platform.org/missing_term
             - name: Anschlussleistung
+              description: Declared net capacity in KW.
               unit: kW
-              isAbout: 
+              isAbout:
                 - name: declared net capacity
                   path: http://openenergy-platform.org/ontology/oeo/OEO_00230002
             - name: Art der Ladeeinrichung
-              isAbout: 
+              description: Type of charging configuration.
+              isAbout:
                 - name: type of column
                   path: https://openenergy-platform.org/missing_term
               valueReference:
@@ -100,60 +113,73 @@ resources:
                   name: fast charging
                   path: https://openenergy-platform.org/missing_term
             - name: Anzahl Ladepunkte
-              isAbout: 
+              description: Number of charging connections.
+              isAbout:
                 - name: number of chargers
                   path: https://openenergy-platform.org/missing_term
             - name: Steckertypen1
-              isAbout: 
+              description: Type of socket of the first charging connection.
+              isAbout:
                 - name: socket type
                   path: https://openenergy-platform.org/missing_term
             - name: P1 [kW]
+              description: Power capacity of the first charging connection.
               unit: kW
-              isAbout: 
+              isAbout:
                 - name: power capacity
                   path: http://openenergy-platform.org/ontology/oeo/OEO_00010257
             - name: Public Key1
-              isAbout: 
+              description: Public key of the first connection
+              isAbout:
                 - name: public key
                   path: https://openenergy-platform.org/missing_term
             - name: Steckertypen2
-              isAbout: 
+              description: Type of socket of the second charging connection.
+              isAbout:
                 - name: socket type
                   path: https://openenergy-platform.org/missing_term
             - name: P2 [kW]
+              description: Power capacity of the second charging connection.
               unit: kW
-              isAbout: 
+              isAbout:
                 - name: power capacity
                   path: http://openenergy-platform.org/ontology/oeo/OEO_00010257
             - name: Public Key2
-              isAbout: 
+              description: Public key of the second connection.
+              isAbout:
                 - name: public key
                   path: https://openenergy-platform.org/missing_term
             - name: Steckertypen3
-              isAbout: 
+              description: Type of socket of the third charging connection.
+              isAbout:
                 - name: socket type
                   path: https://openenergy-platform.org/missing_term
             - name: P3 [kW]
+              description: Power capacity of the third charging connection.
               unit: kW
-              isAbout: 
+              isAbout:
                 - name: power capacity
                   path: http://openenergy-platform.org/ontology/oeo/OEO_00010257
             - name: Public Key3
-              isAbout: 
+              description: Public key of the third connection.
+              isAbout:
                 - name: public key
                   path: https://openenergy-platform.org/missing_term
             - name: Steckertypen4
-              isAbout: 
+              description: Type of socket of the fourth charging connection.
+              isAbout:
                 - name: socket type
                   path: https://openenergy-platform.org/missing_term
             - name: P4 [kW]
+              description: Power capacity of the fourth charging connection.
               unit: kW
-              isAbout: 
+              isAbout:
                 - name: power capacity
                   path: http://openenergy-platform.org/ontology/oeo/OEO_00010257
             - name: Public Key4
-              isAbout: 
+              description: Public key of the fourth connection.
+              isAbout:
                 - name: public key
                   path: https://openenergy-platform.org/missing_term
 
-      
+

@@ -42,9 +42,9 @@ def annotate(download_date: tuple = None):
 
     # Update schema and annotations
     annotations["resources"][0]["name"] = f"bnetza_charging_stations_{dd}_{mm}_{yyyy}"
-    annotations["resources"][0]["path"] = filename
-    annotations["resources"][0]["format"] = "CSV"
-    annotations["resources"][0]["encoding"] = "UTF-8"
+    annotations["resources"][0]["path"] = f"{filename}.csv"
+    annotations["resources"][0]["format"] = "csv"
+    annotations["resources"][0]["encoding"] = "utf-8"
     annotations["resources"][0]["schema"]["fields"] = values
 
     # Update name

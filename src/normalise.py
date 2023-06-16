@@ -5,7 +5,7 @@ import frictionless as fl
 from collections import OrderedDict
 from copy import deepcopy
 from omi.dialects.oep.dialect import OEP_V_1_5_Dialect
-import json 
+import json
 from os import mkdir, path
 
 COLUMN_DATA = "bnetza_charging_columns_{dd}_{mm}_{yyyy}"
@@ -58,7 +58,7 @@ def get_normalised_data(download_date: tuple = None):
         {f["name"]: f for f in column_dict["fields"]}
     )
     annotation_fields = {f["name"]: f for f in annotations["resources"][0]["schema"]["fields"] if f["name"] in column_fields.keys()}
-
+    annotation_fields["id"] = {"description": "Unique identifier"}
     for k,v in annotation_fields.items():
         column_fields[k].update(v)
     column_fields_list = [v for v in column_fields.values()]
@@ -66,8 +66,8 @@ def get_normalised_data(download_date: tuple = None):
         "profile": "tabular-data-resource",
         "name": column_filename,
         "path": column_filename,
-        "format": "CSV",
-        "encoding": "UTF-8",
+        "format": "csv",
+        "encoding": "utf-8",
         "schema": {
             "fields": column_fields_list,
             "primaryKey": ["id"]
@@ -85,17 +85,19 @@ def get_normalised_data(download_date: tuple = None):
 
     reference_fields = {"Steckertypen1": "Steckertypen", "P1 [kW]":"Leistungskapazität", "Public Key1":"PublicKey"}
     annotation_fields = {f["name"]: f for f in annotations["resources"][0]["schema"]["fields"] if f["name"] in reference_fields.keys()}
-    
+    annotation_fields["id"] = {"description": "Unique identifier"}
+    annotation_fields["column_id"] = {"description": "Identifier of column"}
     for k,v in annotation_fields.items():
-        socket_fields[reference_fields[k]].update(v)
-        socket_fields[reference_fields[k]]["name"] = reference_fields[k]
+        socket_fields[reference_fields.get(k,k)].update(v)
+        socket_fields[reference_fields.get(k,k)]["name"] = reference_fields.get(k,k)
+        socket_fields[reference_fields.get(k,k)]["description"] = socket_fields[reference_fields.get(k,k)]["description"].replace(" first", "")
     socket_fields_list = [v for v in socket_fields.values()]
     socket_resource = {
         "profile": "tabular-data-resource",
         "name": socket_filename,
         "path": socket_filename,
-        "format": "CSV",
-        "encoding": "UTF-8",
+        "format": "csv",
+        "encoding": "utf-8",
         "schema": {
             "fields": socket_fields_list,
             "primaryKey": ["id"],
@@ -123,7 +125,7 @@ def get_normalised_data(download_date: tuple = None):
 def main():
 
     column_data, socket_data, column_filename, socket_filename, compiled_metadata, (dd, mm, yyyy) = get_normalised_data()
-    # export 
+    # export
 
     if not path.exists(f"{NORMALISEDIR}"):
         mkdir(NORMALISEDIR)
@@ -133,6 +135,6 @@ def main():
 
     with open(f"{NORMALISEDIR}/{NORMALIZED_FILENAME.format(mm=mm, dd=dd, yyyy=yyyy)}.json", "w", encoding="utf8") as output:
         json.dump(compiled_metadata, output, indent=4, ensure_ascii=False)
-        
+
 if __name__=="__main__":
     main()
