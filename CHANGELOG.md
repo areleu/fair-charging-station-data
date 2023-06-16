@@ -2,7 +2,8 @@
 
 # 16.06.2023
 
-- Added the option to make the renamed dataset partially compatible with the OEP. Missing datatypes.
+- Added the option to make the renamed dataset partially compatible with the OEP.
+- Added license to all the files
 
 # 12.06.2023
 
