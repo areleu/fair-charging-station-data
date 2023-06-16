@@ -111,6 +111,8 @@ def get_renamed_normalised(download_date: tuple = None, oep=True):
         field["name"] = COLUMN_RENAME.get(old_name, old_name)
         if oep:
             field["type"] = COLUMN_DATATYPE.get(old_name, field.get("type", "string"))
+            if field["name"] == "id":
+                field.pop("constraints")
         if "valueReference" in field.keys():
             new_refs = []
             for ref in field["valueReference"]:
@@ -139,6 +141,8 @@ def get_renamed_normalised(download_date: tuple = None, oep=True):
         old_name = field["name"]
         if oep:
             field["type"] = COLUMN_DATATYPE.get(old_name, field.get("type", "string"))
+            if field["name"] == "id":
+                field.pop("constraints")
         field["name"] = COLUMN_RENAME.get(old_name, old_name)
         new_fields_socket.append(field)
 
