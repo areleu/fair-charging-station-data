@@ -38,6 +38,8 @@ import json
 from os import mkdir, path
 
 INPUT_METADATA_FILE = "metadata.yaml"
+if not path.exists(INPUT_METADATA_FILE):
+    INPUT_METADATA_FILE = "src/fair/metadata.yaml"
 
 
 def annotate(download_date: tuple = None):

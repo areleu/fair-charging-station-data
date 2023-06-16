@@ -82,7 +82,7 @@ def get_normalised_data(download_date: tuple = None):
 
     # column data
     # get  file schema
-    column_schema = fl.Schema.describe(f"{NORMALISEDIR}/{column_filename}.csv", encoding="utf-8")
+    column_schema = fl.Schema.describe(column_data)
     column_dict = column_schema.to_dict()
 
     column_fields = OrderedDict(
@@ -107,7 +107,7 @@ def get_normalised_data(download_date: tuple = None):
 
     # socket data
     # get file schema
-    socket_schema = fl.Schema.describe(f"{NORMALISEDIR}/{socket_filename}.csv", encoding="utf-8")
+    socket_schema = fl.Schema.describe(socket_data)
     socket_dict = socket_schema.to_dict()
 
     socket_fields = OrderedDict(

@@ -34,7 +34,8 @@ from annotate import annotate
 import json
 from os import mkdir, path
 
-DEBUG = True
+DEBUG = False
+OEP = False
 
 OEPDIR = "oep"
 OEP_NORMAL_FILENAME = "bnetza_charging_stations_normalised_{dd}_{mm}_{yyyy}"
@@ -214,7 +215,7 @@ def get_renamed_annotated(download_date: tuple = None, oep=True):
     return station_data, station_filename, station_compiled_metadata, (dd, mm, yyyy)
 
 def main():
-    column_data, socket_data, column_filename, socket_filename, normalised_compiled_metadata, (dd, mm, yyyy) = get_renamed_normalised()
+    column_data, socket_data, column_filename, socket_filename, normalised_compiled_metadata, (dd, mm, yyyy) = get_renamed_normalised(oep=OEP)
     if not path.exists(f"{OEPDIR}"):
         mkdir(OEPDIR)
     if not DEBUG:
@@ -224,7 +225,7 @@ def main():
         with open(f"{OEPDIR}/{OEP_NORMAL_FILENAME.format(mm=mm, dd=dd, yyyy=yyyy)}.json", "w", encoding="utf8") as output:
             json.dump(normalised_compiled_metadata, output, indent=4, ensure_ascii=False)
 
-    station_data, station_filename, station_compiled_metadata, (dd, mm, yyyy) = get_renamed_annotated()
+    station_data, station_filename, station_compiled_metadata, (dd, mm, yyyy) = get_renamed_annotated(oep=OEP)
     if DEBUG:
         station_data = station_data.head(10)
     station_data.to_csv(f"{OEPDIR}/{station_filename}.csv", index=True)
