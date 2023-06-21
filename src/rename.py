@@ -43,11 +43,11 @@ OEP_REGULAR_FILEANAME = "bnetza_charging_stations_{dd}_{mm}_{yyyy}"
 
 COLUMN_RENAME = {
     "Betreiber": "operator",
-    "Straße" : "street",
-    "Hausnummer": "address_number",
+    "Straße" : "thoroughfare",
+    "Hausnummer": "locator_designator",
     "Adresszusatz": "address_supplement",
     "Postleitzahl": "postcode",
-    "Ort": "municipality",
+    "Ort": "post_name",
     "Bundesland": "federal_state",
     "Kreis/kreisfreie Stadt": "county",
     "Breitengrad": "latitude",

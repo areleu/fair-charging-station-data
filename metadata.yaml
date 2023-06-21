@@ -53,40 +53,40 @@ resources:
                 - name: organisation
                   path: http://openenergy-platform.org/ontology/oeo/OEO_00030022
             - name: Straße
-              description: Street of the station address.
+              description: The name of a passage or way through from one location to another.
               isAbout:
-                - name: street name
-                  path: https://spec.edmcouncil.org/fibo/ontology/FND/Places/Addresses/StreetName
+                - name: thoroughfare
+                  path: http://www.w3.org/ns/locn#thoroughfare
             - name: Hausnummer
-              description: Address number of the station.
+              description: A number or sequence of characters that uniquely identifies the locator within the relevant scope.
               isAbout:
-                - name: primary address number
-                  path: https://spec.edmcouncil.org/fibo/ontology/FND/Places/Addresses/PrimaryAddressNumber
+                - name: locator designator
+                  path: http://www.w3.org/ns/locn#locatorDesignator
             - name: Adresszusatz
               description: Supplemental address information
               isAbout:
                 - name: supplemental address component
                   path: https://spec.edmcouncil.org/fibo/ontology/FND/Places/Addresses/SupplementalAddressComponent
             - name: Postleitzahl
-              description: Postal code.
+              description: The code created and maintained for postal purposes to identify a subdivision of addresses and postal delivery points.
               isAbout:
-                - name: postcode
-                  path: https://spec.edmcouncil.org/fibo/ontology/FND/Places/Addresses/Postcode
+                - name: post code
+                  path: http://www.w3.org/ns/locn#postCode
             - name: Ort
-              description: Municipality or city.
+              description: A name created and maintained for postal purposes to identify a subdivision of addresses and postal delivery points.
               isAbout:
-                - name: municipality
-                  path: https://spec.edmcouncil.org/fibo/ontology/FND/Places/Locations/Municipality
+                - name: post name
+                  path: http://www.w3.org/ns/locn#postName
             - name: Bundesland
               description: Federal state.
               isAbout:
-                - name: federal state
-                  path: https://spec.edmcouncil.org/fibo/ontology/FND/Places/Locations/FederalState
+                - name: administrative unit level 1
+                  path: http://www.w3.org/ns/locn#adminUnitL1
             - name: Kreis/kreisfreie Stadt
               description: County.
               isAbout:
-                - name: county
-                  path: https://spec.edmcouncil.org/fibo/ontology/FND/Places/Locations/County
+                - name: administrative unit level 2
+                  path: http://www.w3.org/ns/locn#adminUnitL2
             - name: Breitengrad
               description: Latitude in the WSG84 reference system.
               isAbout:
