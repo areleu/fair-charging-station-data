@@ -53,6 +53,7 @@ def get_clean_data(download_date: tuple = None):
 
     if not path.exists(f"{FAIRDIR}/{filename}.csv"):
         df = pd.read_excel(excel, header=10)
+        df = df.drop_duplicates(ignore_index=True)
 
 
         # cleaning mixed types in column, looks clunky but dom't know a more transparent way, the data is just too heterogeneous.
@@ -65,6 +66,7 @@ def get_clean_data(download_date: tuple = None):
         df["Breitengrad"]  = df["Breitengrad"].astype("string").str.replace(",", ".").astype(float)
         df["Längengrad"]  = df["Längengrad"].astype("string").str.replace(",", ".").astype(float)
         # Replace cleaning steps when the source is changed
+        # Drop all duplicates
 
         df.to_csv(
             f"{FAIRDIR}/{filename}.csv",
