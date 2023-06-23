@@ -115,7 +115,7 @@ def get_renamed_normalised(download_date: tuple = None, oep=True):
         if oep:
             field["type"] = COLUMN_DATATYPE.get(old_name, field.get("type", "string"))
             if field["name"] == "id":
-                field.pop("constraints")
+                field.pop("constraints", None)
         if "valueReference" in field.keys():
             new_refs = []
             for ref in field["valueReference"]:
@@ -135,7 +135,7 @@ def get_renamed_normalised(download_date: tuple = None, oep=True):
     if oep:
         normalised_compiled_metadata["resources"][0]["dialect"] = { "delimiter": ",", "decimalSeparator": "."}
         normalised_compiled_metadata["resources"][0]["format"] = "PostgreSQL"
-        normalised_compiled_metadata["resources"][0].pop("encoding")
+        normalised_compiled_metadata["resources"][0].pop("encoding", None)
 
     # Socket resource renaming
     socket_resource_fields = normalised_compiled_metadata["resources"][1]["schema"]["fields"]
@@ -145,7 +145,7 @@ def get_renamed_normalised(download_date: tuple = None, oep=True):
         if oep:
             field["type"] = COLUMN_DATATYPE.get(old_name, field.get("type", "string"))
             if field["name"] == "id":
-                field.pop("constraints")
+                field.pop("constraints", None)
         field["name"] = COLUMN_RENAME.get(old_name, old_name)
         new_fields_socket.append(field)
 
@@ -162,7 +162,7 @@ def get_renamed_normalised(download_date: tuple = None, oep=True):
     if oep:
         normalised_compiled_metadata["resources"][1]["dialect"] = { "delimiter": ",", "decimalSeparator": "."}
         normalised_compiled_metadata["resources"][1]["format"] = "PostgreSQL"
-        normalised_compiled_metadata["resources"][1].pop("encoding")
+        normalised_compiled_metadata["resources"][1].pop("encoding", None)
 
     # Operator resource renaming
     operator_resource_fields = normalised_compiled_metadata["resources"][2]["schema"]["fields"]
@@ -172,7 +172,7 @@ def get_renamed_normalised(download_date: tuple = None, oep=True):
         if oep:
             field["type"] = COLUMN_DATATYPE.get(old_name, field.get("type", "string"))
             if field["name"] == "id":
-                field.pop("constraints")
+                field.pop("constraints", None)
         field["name"] = COLUMN_RENAME.get(old_name, old_name)
         new_fields_operator.append(field)
 
@@ -187,7 +187,7 @@ def get_renamed_normalised(download_date: tuple = None, oep=True):
     if oep:
         normalised_compiled_metadata["resources"][2]["dialect"] = { "delimiter": ",", "decimalSeparator": "."}
         normalised_compiled_metadata["resources"][2]["format"] = "PostgreSQL"
-        normalised_compiled_metadata["resources"][2].pop("encoding")
+        normalised_compiled_metadata["resources"][2].pop("encoding", None)
 
     normalised_compiled_metadata["resources"][0]["schema"]["foreignKeys"][0]["reference"]["resource"] = "model_draft."+ new_operator_filename if oep else new_operator_filename
 
@@ -199,7 +199,7 @@ def get_renamed_normalised(download_date: tuple = None, oep=True):
         if oep:
             field["type"] = COLUMN_DATATYPE.get(old_name, field.get("type", "string"))
             if field["name"] == "id":
-                field.pop("constraints")
+                field.pop("constraints", None)
         field["name"] = COLUMN_RENAME.get(old_name, old_name)
         new_fields_location.append(field)
 
@@ -214,7 +214,7 @@ def get_renamed_normalised(download_date: tuple = None, oep=True):
     if oep:
         normalised_compiled_metadata["resources"][3]["dialect"] = { "delimiter": ",", "decimalSeparator": "."}
         normalised_compiled_metadata["resources"][3]["format"] = "PostgreSQL"
-        normalised_compiled_metadata["resources"][3].pop("encoding")
+        normalised_compiled_metadata["resources"][3].pop("encoding", None)
 
     normalised_compiled_metadata["resources"][0]["schema"]["foreignKeys"][0]["reference"]["resource"] = "model_draft."+ new_location_filename if oep else new_location_filename
 
@@ -266,7 +266,7 @@ def get_renamed_annotated(download_date: tuple = None, oep=True):
         station_compiled_metadata["resources"][0]["schema"]["foreignKeys"] = []
         station_compiled_metadata["resources"][0]["dialect"] = { "delimiter": ",", "decimalSeparator": "."}
         station_compiled_metadata["resources"][0]["format"] = "PostgreSQL"
-        station_compiled_metadata["resources"][0].pop("encoding")
+        station_compiled_metadata["resources"][0].pop("encoding", None)
     station_compiled_metadata["resources"][0]["name"] = "model_draft." + station_compiled_metadata["resources"][0]["name"] if oep else station_compiled_metadata["resources"][0]["name"]
 
     station_compiled_metadata["name"] = OEP_REGULAR_FILEANAME.format(mm=mm, dd=dd, yyyy=yyyy)
