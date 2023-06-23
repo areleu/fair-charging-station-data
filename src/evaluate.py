@@ -35,7 +35,7 @@ import jsonschema_rs
 from pathlib import Path
 from clean import get_clean_data, FAIRDIR
 from normalise import NORMALIZED_FILENAME, NORMALISEDIR
-from rename import OEP_REGULAR_FILEANAME, OEP_NORMAL_FILENAME, OEPDIR
+from rename import OEP_REGULAR_FILEANAME, OEP_NORMAL_FILENAME, OEPDIR_DEFAULT, OEPDIR_NORMAL
 from os import path, mkdir
 
 METADATA_GENERIC = "https://raw.githubusercontent.com/OpenEnergyPlatform/oemetadata/develop/metadata/{}/schema.json"
@@ -99,8 +99,8 @@ def main():
 
     original = f"{FAIRDIR}/{filename}.json"
     normalised = f"{NORMALISEDIR}/{NORMALIZED_FILENAME.format(mm=mm, dd=dd, yyyy=yyyy)}.json"
-    renamed = f"{OEPDIR}/{OEP_REGULAR_FILEANAME.format(mm=mm, dd=dd, yyyy=yyyy)}.json"
-    renamed_normalised = f"{OEPDIR}/{OEP_NORMAL_FILENAME.format(mm=mm, dd=dd, yyyy=yyyy)}.json"
+    renamed = f"{OEPDIR_DEFAULT}/{OEP_REGULAR_FILEANAME.format(mm=mm, dd=dd, yyyy=yyyy)}.json"
+    renamed_normalised = f"{OEPDIR_NORMAL}/{OEP_NORMAL_FILENAME.format(mm=mm, dd=dd, yyyy=yyyy)}.json"
     for d in [original, normalised, renamed, renamed_normalised]:
         test_compilance(d, "v152")
 
