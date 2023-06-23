@@ -41,6 +41,8 @@ from os import mkdir, path
 
 COLUMN_DATA = "bnetza_charging_columns_{dd}_{mm}_{yyyy}"
 SOCKET_DATA = "bnetza_charging_sockets_{dd}_{mm}_{yyyy}"
+OPERATOR_DATA = "bnetza_charging_operators_{dd}_{mm}_{yyyy}"
+LOCATION_DATA = "bnetza_charging_locations_{dd}_{mm}_{yyyy}"
 NORMALIZED_FILENAME = "bnetza_charging_stations_normalised_{dd}_{mm}_{yyyy}"
 NORMALISEDIR = "normalised"
 
@@ -53,6 +55,8 @@ def get_normalised_data(download_date: tuple = None):
 
     # socket data
     ci = "column_id"
+    oi = "operator_id"
+    li = "location_id"
     column_names = [ci , "Steckertypen", "Leistungskapazität", "PublicKey"]
     socket_data_1 = df.iloc[:,14:17].reset_index().rename(columns={"id": ci})
     socket_data_1.columns = [column_names]
@@ -74,6 +78,46 @@ def get_normalised_data(download_date: tuple = None):
 
     socket_filename = SOCKET_DATA.format(dd=dd, mm=mm, yyyy=yyyy)
     column_filename = COLUMN_DATA.format(dd=dd, mm=mm, yyyy=yyyy)
+    operator_filename = OPERATOR_DATA.format(dd=dd, mm=mm, yyyy=yyyy)
+    location_filename = LOCATION_DATA.format(dd=dd, mm=mm, yyyy=yyyy)
+
+    # Separate operators
+    column_data["Betreiber"] = column_data["Betreiber"].str.strip()
+    operator_data = pd.DataFrame({"Betreiber": column_data["Betreiber"].unique()})
+    operator_data.sort_values(by="Betreiber")
+    operator_data.index.name = "id"
+    new_columns = pd.merge(column_data.reset_index(), operator_data.reset_index()[["Betreiber", "id"]],
+                           left_on="Betreiber", right_on="Betreiber", how="left", sort=False).set_index("id_x")
+    new_columns.index.name = "id"
+    column_data.insert(loc=1, column= oi, value= new_columns["id_y"])
+    column_data.drop(columns=["Betreiber"], inplace=True)
+
+    # Separate locations
+    location_columns = ['Straße',
+                        'Hausnummer',
+                        'Adresszusatz',
+                        'Ort',
+                        'Bundesland',
+                        'Kreis/kreisfreie Stadt']
+    numeric_location_columns = ['Postleitzahl','Breitengrad', 'Längengrad']
+    all_locations = location_columns + numeric_location_columns
+
+    column_data[location_columns] = column_data[location_columns].apply(lambda x: x.str.strip())
+    column_data["identifier"] = column_data[all_locations].astype(str).sum(axis=1)
+
+
+
+    location_data = column_data[all_locations + ["identifier"]]
+    location_data.drop_duplicates(inplace=True)
+    location_data = location_data.reset_index(drop=True)
+    location_data.index.name = "id"
+    column_data.drop(columns=all_locations, inplace=True)
+    new_columns = pd.merge(column_data.reset_index(), location_data.reset_index()[["identifier", "id"]],
+                           left_on="identifier", right_on="identifier", how="left", sort=False).set_index("id_x")
+    new_columns.index.name = "id"
+    column_data.insert(loc=1, column= li, value= new_columns["id_y"])
+    column_data.drop(columns=["identifier"], inplace=True)
+    location_data.drop(columns=["identifier"], inplace=True)
 
     # Annotate
     # get annotated fields
@@ -89,6 +133,8 @@ def get_normalised_data(download_date: tuple = None):
         {f["name"]: f for f in column_dict["fields"]}
     )
     annotation_fields = {f["name"]: f for f in annotations["resources"][0]["schema"]["fields"] if f["name"] in column_fields.keys()}
+    annotation_fields["operator_id"] = {"description": "Identifier of the operator"}
+
     annotation_fields["id"] = {"description": "Unique identifier"}
     for k,v in annotation_fields.items():
         column_fields[k].update(v)
@@ -96,12 +142,24 @@ def get_normalised_data(download_date: tuple = None):
     column_resource = {
         "profile": "tabular-data-resource",
         "name": column_filename,
-        "path": column_filename,
+        "path": f"{column_filename}.csv",
         "format": "csv",
         "encoding": "utf-8",
         "schema": {
             "fields": column_fields_list,
-            "primaryKey": ["id"]
+            "primaryKey": ["id"],
+            "foreignKeys": [
+                {"fields": [oi],
+                  "reference": {
+                      "resource": operator_filename,
+                      "fields": ["id"]
+                  }},
+                {"fields": [li],
+                  "reference": {
+                      "resource": location_filename,
+                      "fields": ["id"]
+                  }}
+            ]
         }
     }
 
@@ -126,7 +184,7 @@ def get_normalised_data(download_date: tuple = None):
     socket_resource = {
         "profile": "tabular-data-resource",
         "name": socket_filename,
-        "path": socket_filename,
+        "path": f"{socket_filename}.csv",
         "format": "csv",
         "encoding": "utf-8",
         "schema": {
@@ -141,21 +199,69 @@ def get_normalised_data(download_date: tuple = None):
             ]
         }
     }
+    operator_schema = fl.Schema.describe(operator_data)
+    operator_dict = operator_schema.to_dict()
+
+    operator_fields = OrderedDict(
+        {f["name"]: f for f in operator_dict["fields"]}
+    )
+
+    annotation_fields = {f["name"]: f for f in annotations["resources"][0]["schema"]["fields"] if f["name"] in operator_fields.keys()}
+    annotation_fields["id"] = {"description": "Unique identifier"}
+    for k,v in annotation_fields.items():
+        operator_fields[k].update(v)
+
+    operator_resource = {
+        "profile": "tabular-data-resource",
+        "name": operator_filename,
+        "path": f"{operator_filename}.csv",
+        "format": "csv",
+        "encoding": "utf-8",
+        "schema": {
+            "fields": operator_fields,
+            "primaryKey": [oi]
+        }
+    }
+
+    location_schema = fl.Schema.describe(location_data)
+    location_dict = location_schema.to_dict()
+
+    location_fields = OrderedDict(
+        {f["name"]: f for f in location_dict["fields"]}
+    )
+
+    annotation_fields = {f["name"]: f for f in annotations["resources"][0]["schema"]["fields"] if f["name"] in location_fields.keys()}
+    annotation_fields["id"] = {"description": "Unique identifier"}
+    for k,v in annotation_fields.items():
+        location_fields[k].update(v)
+
+    location_resource = {
+        "profile": "tabular-data-resource",
+        "name": location_filename,
+        "path": f"{location_filename}.csv",
+        "format": "csv",
+        "encoding": "utf-8",
+        "schema": {
+            "fields": location_fields,
+            "primaryKey": [oi]
+        }
+    }
+
     annotations_new = deepcopy(annotations)
     annotations_new["name"] = f"{NORMALIZED_FILENAME.format(mm=mm, dd=dd, yyyy=yyyy)}"
     annotations_new["title"] = "FAIR Charging Station data (Normalised)"
     annotations_new["description"] = "Normalised dataset based on the BNetzA charging station data."
     annotations_new["publicationDate"] = f"{yyyy}-{mm}-{dd}"
-    annotations_new["resources"] = [column_resource, socket_resource]
+    annotations_new["resources"] = [column_resource, socket_resource, operator_resource, location_resource]
 
     dialect1_5 = OEP_V_1_5_Dialect()
     compiled_metadata = dialect1_5.compile(annotations_new)
 
-    return column_data, socket_data, column_filename, socket_filename, compiled_metadata, (dd, mm, yyyy)
+    return column_data, socket_data, operator_data, location_data, column_filename, socket_filename, operator_filename, location_filename, compiled_metadata, (dd, mm, yyyy)
 
 def main():
 
-    column_data, socket_data, column_filename, socket_filename, compiled_metadata, (dd, mm, yyyy) = get_normalised_data()
+    column_data, socket_data, operator_data, location_data, column_filename, socket_filename, operator_filename, location_filename, compiled_metadata, (dd, mm, yyyy) = get_normalised_data()
     # export
 
     if not path.exists(f"{NORMALISEDIR}"):
@@ -163,6 +269,8 @@ def main():
 
     column_data.to_csv(f"{NORMALISEDIR}/{column_filename}.csv")
     socket_data.to_csv(f"{NORMALISEDIR}/{socket_filename}.csv")
+    operator_data.to_csv(f"{NORMALISEDIR}/{operator_filename}.csv")
+    location_data.to_csv(f"{NORMALISEDIR}/{location_filename}.csv")
 
     with open(f"{NORMALISEDIR}/{NORMALIZED_FILENAME.format(mm=mm, dd=dd, yyyy=yyyy)}.json", "w", encoding="utf8") as output:
         json.dump(compiled_metadata, output, indent=4, ensure_ascii=False)
