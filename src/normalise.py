@@ -133,11 +133,15 @@ def get_normalised_data(download_date: tuple = None):
         {f["name"]: f for f in column_dict["fields"]}
     )
     annotation_fields = {f["name"]: f for f in annotations["resources"][0]["schema"]["fields"] if f["name"] in column_fields.keys()}
-    annotation_fields["operator_id"] = {"description": "Identifier of the operator"}
+    annotation_fields[oi] = {"description": "Identifier of the operator"}
+    annotation_fields[li] = {"description": "Identifier of the location"}
 
     annotation_fields["id"] = {"description": "Unique identifier"}
     for k,v in annotation_fields.items():
         column_fields[k].update(v)
+    if "id" in column_fields:
+        if "constraints" in column_fields["id"]:
+            column_fields["id"].pop("constraints")
     column_fields_list = [v for v in column_fields.values()]
     column_resource = {
         "profile": "tabular-data-resource",
@@ -180,6 +184,10 @@ def get_normalised_data(download_date: tuple = None):
         socket_fields[reference_fields.get(k,k)].update(v)
         socket_fields[reference_fields.get(k,k)]["name"] = reference_fields.get(k,k)
         socket_fields[reference_fields.get(k,k)]["description"] = socket_fields[reference_fields.get(k,k)]["description"].replace(" first", "")
+    if "id" in socket_fields:
+        if "constraints" in socket_fields["id"]:
+            socket_fields["id"].pop("constraints")
+
     socket_fields_list = [v for v in socket_fields.values()]
     socket_resource = {
         "profile": "tabular-data-resource",
@@ -210,7 +218,10 @@ def get_normalised_data(download_date: tuple = None):
     annotation_fields["id"] = {"description": "Unique identifier"}
     for k,v in annotation_fields.items():
         operator_fields[k].update(v)
-
+    if "id" in operator_fields:
+        if "constraints" in operator_fields["id"]:
+            operator_fields["id"].pop("constraints")
+    operator_fields_list = [v for v in operator_fields.values()]
     operator_resource = {
         "profile": "tabular-data-resource",
         "name": operator_filename,
@@ -218,8 +229,8 @@ def get_normalised_data(download_date: tuple = None):
         "format": "csv",
         "encoding": "utf-8",
         "schema": {
-            "fields": operator_fields,
-            "primaryKey": [oi]
+            "fields": operator_fields_list,
+            "primaryKey": ["id"]
         }
     }
 
@@ -234,7 +245,10 @@ def get_normalised_data(download_date: tuple = None):
     annotation_fields["id"] = {"description": "Unique identifier"}
     for k,v in annotation_fields.items():
         location_fields[k].update(v)
-
+    if "id" in location_fields:
+        if "constraints" in location_fields["id"]:
+            location_fields["id"].pop("constraints")
+    location_fields_list = [v for v in location_fields.values()]
     location_resource = {
         "profile": "tabular-data-resource",
         "name": location_filename,
@@ -242,8 +256,8 @@ def get_normalised_data(download_date: tuple = None):
         "format": "csv",
         "encoding": "utf-8",
         "schema": {
-            "fields": location_fields,
-            "primaryKey": [li]
+            "fields": location_fields_list,
+            "primaryKey": ["id"]
         }
     }
 
