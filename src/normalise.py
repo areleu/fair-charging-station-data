@@ -243,7 +243,7 @@ def get_normalised_data(download_date: tuple = None):
         "encoding": "utf-8",
         "schema": {
             "fields": location_fields,
-            "primaryKey": [oi]
+            "primaryKey": [li]
         }
     }
 
