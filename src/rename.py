@@ -177,7 +177,7 @@ def get_renamed_normalised(download_date: tuple = None, oep=True):
         new_fields_operator.append(field)
 
     assert set(f["name"] for f in new_fields_operator) == set(list(operator_data.columns) + list(operator_data.index.names)), "Operator column names in output do not match"
-    normalised_compiled_metadata["resources"][2]["schema"]["fields"] = new_fields_socket
+    normalised_compiled_metadata["resources"][2]["schema"]["fields"] = new_fields_operator
 
     new_operator_filename = f"bnetza_operators_{dd}_{mm}_{yyyy}"
 
@@ -204,7 +204,7 @@ def get_renamed_normalised(download_date: tuple = None, oep=True):
         new_fields_location.append(field)
 
     assert set(f["name"] for f in new_fields_location) == set(list(location_data.columns) + list(location_data.index.names)), "Location column names in output do not match"
-    normalised_compiled_metadata["resources"][3]["schema"]["fields"] = new_fields_socket
+    normalised_compiled_metadata["resources"][3]["schema"]["fields"] = new_fields_location
 
     new_location_filename = f"bnetza_locations_{dd}_{mm}_{yyyy}"
 
