@@ -13,7 +13,7 @@ This script should theoretically work with any version of python able to run pan
 pip install -r requirements.txt
 ```
 
-or simply 
+or simply
 
 ```bash
 pip install pandas requests frictionless omi openpyxl jsonschema_rs
@@ -22,7 +22,7 @@ pip install pandas requests frictionless omi openpyxl jsonschema_rs
 Each script has to be run with the directory where you want to have the data as current working directory. You run them with python normally, for example:
 
 ```bash
-python src/clean.py 
+python src/clean.py
 ```
 To get the proper data run the scripts in the following order:
 
@@ -52,3 +52,9 @@ connection sockets are separated in two different tables.
 ## Renamed CSV
 
 These files contain the output of the previous scripts but with column names translated to English and deprived of special characters.
+
+## Caveats
+
+The cleaning script will remove duplicate entries, this was not decided lightly as it can be the case that two columns are in the same place with the exact same characteristics. It is not possible, with our resources to validate or deny this, but these duplicate entries seem to be more of a input error than actual multiple columns with similar characteristics.
+
+It is the case that columns with different characteristics share a place, these are kept.
