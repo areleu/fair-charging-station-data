@@ -4,6 +4,7 @@ __pycache__
 .vscode
 .coverage
 report.xml
+*.pdf
 *.egg-info
 data/*
 fair/*
