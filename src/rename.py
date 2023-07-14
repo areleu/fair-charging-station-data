@@ -265,7 +265,7 @@ def main():
         mkdir(OEPDIR_DEFAULT)
     if DEBUG:
         station_data = station_data.head(10)
-    station_data.to_csv(f"{OEPDIR_DEFAULT}/{station_filename}.csv", index=True)
+    station_data.to_csv(f"{OEPDIR_DEFAULT}/{station_filename}.csv", index=OEP)
 
     with open(f"{OEPDIR_DEFAULT}/{OEP_REGULAR_FILEANAME.format(mm=mm, dd=dd, yyyy=yyyy)}.json", "w", encoding="utf8") as output:
         json.dump(station_compiled_metadata, output, indent=4, ensure_ascii=False)
