@@ -39,7 +39,7 @@ def get_clean_data(download_date: tuple = None):
         df["Längengrad"]  = df["Längengrad"].astype("string").str.replace(",", ".").astype(float)
         # Replace cleaning steps when the source is changed
         # Drop all duplicates
-    # Datetime format
+
         df.to_csv(
             f"{FAIRDIR}/{filename}.csv",
             sep=",",
@@ -50,6 +50,7 @@ def get_clean_data(download_date: tuple = None):
     else:
         df = pd.read_csv(f"{FAIRDIR}/{filename}.csv", decimal=".", sep=",", encoding="utf-8")
 
+    # Datetime format
     df["Inbetriebnahmedatum"]= pd.to_datetime(df["Inbetriebnahmedatum"])
 
     return df, filename, (dd, mm, yyyy)
