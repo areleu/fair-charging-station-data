@@ -188,7 +188,7 @@ def get_renamed_normalised(download_date: tuple = None, oep=True):
         normalised_compiled_metadata["resources"][3]["format"] = "PostgreSQL"
         normalised_compiled_metadata["resources"][3].pop("encoding", None)
 
-    normalised_compiled_metadata["resources"][0]["schema"]["foreignKeys"][0]["reference"]["resource"] = "model_draft."+ new_location_filename if oep else new_location_filename
+    normalised_compiled_metadata["resources"][0]["schema"]["foreignKeys"][1]["reference"]["resource"] = "model_draft."+ new_location_filename if oep else new_location_filename
 
     normalised_compiled_metadata["name"] = OEP_NORMAL_FILENAME.format(mm=mm, dd=dd, yyyy=yyyy)
     normalised_compiled_metadata["id"] = OEP_NORMAL_FILENAME.format(mm=mm, dd=dd, yyyy=yyyy)
