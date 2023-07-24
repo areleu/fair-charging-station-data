@@ -58,3 +58,9 @@ These files contain the output of the previous scripts but with column names tra
 The cleaning script will remove duplicate entries, this was not decided lightly as it can be the case that two columns are in the same place with the exact same characteristics. It is not possible, with our resources to validate or deny this, but these duplicate entries seem to be more of a input error than actual multiple columns with similar characteristics.
 
 It is the case that columns with different characteristics share a place, these are kept.
+
+## Data Sources
+
+
+- [BNetzA Data](https://www.bundesnetzagentur.de/SharedDocs/Downloads/DE/Sachgebiete/Energie/Unternehmen_Institutionen/E_Mobilitaet/Ladesaeulenregister.xlsx) 
+- [OEP Metadata schema](https://raw.githubusercontent.com/OpenEnergyPlatform/oemetadata/develop/metadata/latest/schema.json) used in evaluate.py
