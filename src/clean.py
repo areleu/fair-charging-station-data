@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: Copyright (c) 2023 German Aerospace Center (DLR)
 # SPDX-License-Identifier: BSD-3-Clause
 
-from download import get_raw
+from load import get_raw
 import pandas as pd
 from os import path, mkdir
 
@@ -49,7 +49,6 @@ def get_clean_data(download_date: tuple = None):
         )
     else:
         df = pd.read_csv(f"{FAIRDIR}/{filename}.csv", decimal=".", sep=",", encoding="utf-8")
-
     # Datetime format
     df["Inbetriebnahmedatum"]= pd.to_datetime(df["Inbetriebnahmedatum"])
 

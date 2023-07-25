@@ -1,5 +1,9 @@
 # CHANGELOG
 
+# 25.07.2023
+- Removed download script completely.
+- Added copy right
+- Multiple bugfixes
 # 16.06.2023
 
 - Added the option to make the renamed dataset partially compatible with the OEP.
