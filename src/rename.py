@@ -124,7 +124,7 @@ def get_renamed_normalised(download_date: tuple = None, oep=True):
     assert set(f["name"] for f in new_fields_socket) == set(list(socket_data.columns) + list(socket_data.index.names)), "Socket column names in output do not match"
     normalised_compiled_metadata["resources"][1]["schema"]["fields"] = new_fields_socket
 
-    new_socket_filename = f"bnetza_charging_sockets_{dd}_{mm}_{yyyy}"
+    new_socket_filename = f"bnetza_charging_points_{dd}_{mm}_{yyyy}"
 
     normalised_compiled_metadata["resources"][1]["schema"]["foreignKeys"][0]["reference"]["resource"] = "model_draft."+ new_column_filename if oep else new_column_filename
 

@@ -121,71 +121,71 @@ resources:
                   name: fast charging
                   path: https://openenergy-platform.org/missing_term
             - name: Anzahl Ladepunkte
-              description: Number of charging connections.
+              description: Number of charging points.
               isAbout:
                 - name: number of chargers
                   path: https://openenergy-platform.org/missing_term
             - name: Steckertypen1
-              description: Type of socket of the first charging connection.
+              description: Type of socket of the first charging point.
               isAbout:
                 - name: socket type
                   path: https://openenergy-platform.org/missing_term
             - name: P1 [kW]
-              description: Power capacity of the first charging connection.
+              description: Power capacity of the first charging point.
               unit: kW
               isAbout:
                 - name: power capacity
                   path: http://openenergy-platform.org/ontology/oeo/OEO_00010257
             - name: Public Key1
-              description: Public key of the first connection
+              description: Public key of the first charging point
               isAbout:
                 - name: public key
                   path: https://openenergy-platform.org/missing_term
             - name: Steckertypen2
-              description: Type of socket of the second charging connection.
+              description: Type of socket of the second charging point.
               isAbout:
                 - name: socket type
                   path: https://openenergy-platform.org/missing_term
             - name: P2 [kW]
-              description: Power capacity of the second charging connection.
+              description: Power capacity of the second charging point.
               unit: kW
               isAbout:
                 - name: power capacity
                   path: http://openenergy-platform.org/ontology/oeo/OEO_00010257
             - name: Public Key2
-              description: Public key of the second connection.
+              description: Public key of the second charging point.
               isAbout:
                 - name: public key
                   path: https://openenergy-platform.org/missing_term
             - name: Steckertypen3
-              description: Type of socket of the third charging connection.
+              description: Type of socket of the third charging point.
               isAbout:
                 - name: socket type
                   path: https://openenergy-platform.org/missing_term
             - name: P3 [kW]
-              description: Power capacity of the third charging connection.
+              description: Power capacity of the third charging point.
               unit: kW
               isAbout:
                 - name: power capacity
                   path: http://openenergy-platform.org/ontology/oeo/OEO_00010257
             - name: Public Key3
-              description: Public key of the third connection.
+              description: Public key of the third charging point.
               isAbout:
                 - name: public key
                   path: https://openenergy-platform.org/missing_term
             - name: Steckertypen4
-              description: Type of socket of the fourth charging connection.
+              description: Type of socket of the fourth charging point.
               isAbout:
                 - name: socket type
                   path: https://openenergy-platform.org/missing_term
             - name: P4 [kW]
-              description: Power capacity of the fourth charging connection.
+              description: Power capacity of the fourth charging point.
               unit: kW
               isAbout:
                 - name: power capacity
                   path: http://openenergy-platform.org/ontology/oeo/OEO_00010257
             - name: Public Key4
-              description: Public key of the fourth connection.
+              description: Public key of the fourth charging point.
               isAbout:
                 - name: public key
                   path: https://openenergy-platform.org/missing_term

@@ -12,7 +12,7 @@ import json
 from os import mkdir, path
 
 COLUMN_DATA = "bnetza_charging_columns_{dd}_{mm}_{yyyy}"
-SOCKET_DATA = "bnetza_charging_sockets_{dd}_{mm}_{yyyy}"
+SOCKET_DATA = "bnetza_charging_points_{dd}_{mm}_{yyyy}"
 OPERATOR_DATA = "bnetza_operators_{dd}_{mm}_{yyyy}"
 LOCATION_DATA = "bnetza_locations_{dd}_{mm}_{yyyy}"
 NORMALIZED_FILENAME = "bnetza_charging_stations_normalised_{dd}_{mm}_{yyyy}"
