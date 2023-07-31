@@ -18,6 +18,23 @@ LOCATION_DATA = "bnetza_locations_{dd}_{mm}_{yyyy}"
 NORMALIZED_FILENAME = "bnetza_charging_stations_normalised_{dd}_{mm}_{yyyy}"
 NORMALISEDIR = "normalised"
 
+CONNECTION_TYPE_MAP = {
+    "DC Kupplung Tesla Typ 2": "DC_tesla_type2_cablefemale",
+    "AC CEE 3 polig": "AC_CEE3polig",
+    "AC CEE 5 polig": "AC_CEE5polig",
+    "CEE-Stecker": "AC_CEE_socketmale",
+    "AC / CEE": "AC_CEE",
+    "DC Kupplung Combo": "DC_CCS_cablefemale",
+    "Adapter Typ1  Auto auf Typ2 Fahrzeugkupplung": "AC_type_1",
+    "AC Kupplung Typ 2": "AC_type2_cablefemale",
+    "AC Steckdose Typ 2": "AC_type2_socketmale",
+    "Typ 2 / Tesla": "DC_tesla_type2_cablefemale",
+    "Tesla": "DC_tesla_type2_cablefemale",
+    "AC Schuko": "AC_Schuko",
+    "DC CHAdeMO": "DC_CHadeMO"
+
+}
+
 def get_normalised_data(download_date: tuple = None):
     df, filename, (dd, mm, yyyy) = get_clean_data(download_date)
 
@@ -52,6 +69,8 @@ def get_normalised_data(download_date: tuple = None):
     column_filename = COLUMN_DATA.format(dd=dd, mm=mm, yyyy=yyyy)
     operator_filename = OPERATOR_DATA.format(dd=dd, mm=mm, yyyy=yyyy)
     location_filename = LOCATION_DATA.format(dd=dd, mm=mm, yyyy=yyyy)
+    # socket_data["types_temp"] = socket_data["Steckertypen"].str.replace(";", ",").str.split(",").apply(lambda lst: ",".join([CONNECTION_TYPE_MAP.get(itm.strip(), "") for itm in lst]))
+    # socket_types = [item.strip() for sublist in list(str(u).replace(";", ",").split(",") for u in socket_data["Steckertypen"].unique()) for item in sublist]
 
     # Separate operators
     column_data["Betreiber"] = column_data["Betreiber"].str.strip()
