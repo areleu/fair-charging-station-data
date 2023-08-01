@@ -54,8 +54,8 @@ def get_clean_data(download_date: tuple = None):
 
     # There is an incongruency between charging points declared and the ones given in the point list
     # TODO: Is it reasonable to replace the declared number with the actual values?
-    df["counted"] = (~ df["Steckertypen1"].isna()).astype(int) + (~ df["Steckertypen2"].isna()).astype(int) + (~ df["Steckertypen3"].isna()).astype(int) + (~ df["Steckertypen4"].isna()).astype(int)
-
+    # df["counted"] = (~ df["Steckertypen1"].isna()).astype(int) + (~ df["Steckertypen2"].isna()).astype(int) + (~ df["Steckertypen3"].isna()).astype(int) + (~ df["Steckertypen4"].isna()).astype(int)
+    df["Anzahl Ladepunkte"] = (~ df["Steckertypen1"].isna()).astype(int) + (~ df["Steckertypen2"].isna()).astype(int) + (~ df["Steckertypen3"].isna()).astype(int) + (~ df["Steckertypen4"].isna()).astype(int)
     return df, filename, (dd, mm, yyyy)
 
 
