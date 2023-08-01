@@ -68,10 +68,10 @@ COLUMN_DATATYPE = {
 }
 
 def get_renamed_normalised(download_date: tuple = None, oep=True):
-    column_data, socket_data, operator_data, location_data, _, _, _, _, normalised_compiled_metadata, (dd, mm, yyyy)= get_normalised_data(download_date)
+    column_data, point_data, operator_data, location_data, _, _, _, _, normalised_compiled_metadata, (dd, mm, yyyy)= get_normalised_data(download_date)
 
     column_data = column_data.rename(columns=COLUMN_RENAME)
-    socket_data = socket_data.rename(columns=COLUMN_RENAME)
+    point_data = point_data.rename(columns=COLUMN_RENAME)
     operator_data = operator_data.rename(columns=COLUMN_RENAME)
     location_data = location_data.rename(columns=COLUMN_RENAME)
 
@@ -110,26 +110,26 @@ def get_renamed_normalised(download_date: tuple = None, oep=True):
         normalised_compiled_metadata["resources"][0].pop("encoding", None)
 
     # Socket resource renaming
-    socket_resource_fields = normalised_compiled_metadata["resources"][1]["schema"]["fields"]
-    new_fields_socket = []
-    for field in socket_resource_fields:
+    point_resource_fields = normalised_compiled_metadata["resources"][1]["schema"]["fields"]
+    new_fields_point = []
+    for field in point_resource_fields:
         old_name = field["name"]
         if oep:
             field["type"] = COLUMN_DATATYPE.get(old_name, field.get("type", "string"))
             if field["name"] == "id":
                 field.pop("constraints", None)
         field["name"] = COLUMN_RENAME.get(old_name, old_name)
-        new_fields_socket.append(field)
+        new_fields_point.append(field)
 
-    assert set(f["name"] for f in new_fields_socket) == set(list(socket_data.columns) + list(socket_data.index.names)), "Socket column names in output do not match"
-    normalised_compiled_metadata["resources"][1]["schema"]["fields"] = new_fields_socket
+    assert set(f["name"] for f in new_fields_point) == set(list(point_data.columns) + list(point_data.index.names)), "Socket column names in output do not match"
+    normalised_compiled_metadata["resources"][1]["schema"]["fields"] = new_fields_point
 
-    new_socket_filename = f"bnetza_charging_points_{dd}_{mm}_{yyyy}"
+    new_point_filename = f"bnetza_charging_points_{dd}_{mm}_{yyyy}"
 
     normalised_compiled_metadata["resources"][1]["schema"]["foreignKeys"][0]["reference"]["resource"] = "model_draft."+ new_column_filename if oep else new_column_filename
 
-    normalised_compiled_metadata["resources"][1]["name"] = "model_draft."+ new_socket_filename if oep else new_socket_filename
-    normalised_compiled_metadata["resources"][1]["path"] = f"{new_socket_filename}.csv"
+    normalised_compiled_metadata["resources"][1]["name"] = "model_draft."+ new_point_filename if oep else new_point_filename
+    normalised_compiled_metadata["resources"][1]["path"] = f"{new_point_filename}.csv"
 
     if oep:
         normalised_compiled_metadata["resources"][1]["dialect"] = { "delimiter": ",", "decimalSeparator": "."}
@@ -194,7 +194,7 @@ def get_renamed_normalised(download_date: tuple = None, oep=True):
     normalised_compiled_metadata["id"] = OEP_NORMAL_FILENAME.format(mm=mm, dd=dd, yyyy=yyyy)
     normalised_compiled_metadata["description"] = normalised_compiled_metadata["description"] + " Column names translated to english."
 
-    return column_data, socket_data, operator_data, location_data, new_column_filename, new_socket_filename, new_operator_filename, new_location_filename, normalised_compiled_metadata, (dd, mm, yyyy)
+    return column_data, point_data, operator_data, location_data, new_column_filename, new_point_filename, new_operator_filename, new_location_filename, normalised_compiled_metadata, (dd, mm, yyyy)
 
 def get_renamed_annotated(download_date: tuple = None, oep=True):
     station_data, station_filename, station_compiled_metadata, (dd, mm, yyyy) = annotate(download_date)
@@ -247,12 +247,12 @@ def get_renamed_annotated(download_date: tuple = None, oep=True):
     return station_data, station_filename, station_compiled_metadata, (dd, mm, yyyy)
 
 def main():
-    column_data, socket_data, operator_data, location_data, column_filename, socket_filename, operator_filename, location_filename, normalised_compiled_metadata, (dd, mm, yyyy) = get_renamed_normalised(oep=OEP)
+    column_data, point_data, operator_data, location_data, column_filename, point_filename, operator_filename, location_filename, normalised_compiled_metadata, (dd, mm, yyyy) = get_renamed_normalised(oep=OEP)
     if not path.exists(f"{OEPDIR_NORMAL}"):
         mkdir(OEPDIR_NORMAL)
     if not DEBUG:
         column_data.to_csv(f"{OEPDIR_NORMAL}/{column_filename}.csv")
-        socket_data.to_csv(f"{OEPDIR_NORMAL}/{socket_filename}.csv")
+        point_data.to_csv(f"{OEPDIR_NORMAL}/{point_filename}.csv")
         operator_data.to_csv(f"{OEPDIR_NORMAL}/{operator_filename}.csv")
         location_data.to_csv(f"{OEPDIR_NORMAL}/{location_filename}.csv")
 

@@ -19,17 +19,17 @@ NORMALIZED_FILENAME = "bnetza_charging_stations_normalised_{dd}_{mm}_{yyyy}"
 NORMALISEDIR = "normalised"
 
 CONNECTION_TYPE_MAP = {
-    "DC Kupplung Tesla Typ 2": "DC_tesla_type2_cablefemale",
+    "DC Kupplung Tesla Typ 2": "DC_type2_cablefemale_tesla",
     "AC CEE 3 polig": "AC_CEE3polig",
     "AC CEE 5 polig": "AC_CEE5polig",
     "CEE-Stecker": "AC_CEE_socketmale",
     "AC / CEE": "AC_CEE",
     "DC Kupplung Combo": "DC_CCS_cablefemale",
-    "Adapter Typ1  Auto auf Typ2 Fahrzeugkupplung": "AC_type_1",
+    "Adapter Typ1 \xa0Auto auf Typ2 Fahrzeugkupplung": "AC_type1",
     "AC Kupplung Typ 2": "AC_type2_cablefemale",
     "AC Steckdose Typ 2": "AC_type2_socketmale",
-    "Typ 2 / Tesla": "DC_tesla_type2_cablefemale",
-    "Tesla": "DC_tesla_type2_cablefemale",
+    "Typ 2 / Tesla": "DC_type2_cablefemale_tesla",
+    "Tesla": "DC_type2_cablefemale_tesla",
     "AC Schuko": "AC_Schuko",
     "DC CHAdeMO": "DC_CHadeMO"
 
@@ -47,30 +47,30 @@ def get_normalised_data(download_date: tuple = None):
     oi = "operator_id"
     li = "location_id"
     column_names = [ci , "Steckertypen", "Leistungskapazität", "PublicKey"]
-    socket_data_1 = df.iloc[:,14:17].reset_index().rename(columns={"id": ci})
-    socket_data_1.columns = [column_names]
-    socket_data_2 = df.iloc[:,17:20].reset_index().rename(columns={"id": ci})
-    socket_data_2.columns = [column_names]
-    socket_data_3 = df.iloc[:,20:23].reset_index().rename(columns={"id": ci})
-    socket_data_3.columns = [column_names]
-    socket_data_4 = df.iloc[:,23:26].reset_index().rename(columns={"id": ci})
-    socket_data_4.columns = [column_names]
+    point_data_1 = df.iloc[:,14:17].reset_index().rename(columns={"id": ci})
+    point_data_1.columns = [column_names]
+    point_data_2 = df.iloc[:,17:20].reset_index().rename(columns={"id": ci})
+    point_data_2.columns = [column_names]
+    point_data_3 = df.iloc[:,20:23].reset_index().rename(columns={"id": ci})
+    point_data_3.columns = [column_names]
+    point_data_4 = df.iloc[:,23:26].reset_index().rename(columns={"id": ci})
+    point_data_4.columns = [column_names]
 
-    socket_data = pd.concat([socket_data_1, socket_data_2, socket_data_3, socket_data_4], ignore_index=True)
+    point_data = pd.concat([point_data_1, point_data_2, point_data_3, point_data_4], ignore_index=True)
 
-    socket_data.columns = [c[0] for c in socket_data.columns]
-    socket_data.dropna(subset=["Steckertypen", "Leistungskapazität", "PublicKey"], how='all', inplace=True)
-    socket_data.sort_values("column_id", inplace=True)
-    socket_data.reset_index(inplace=True)
-    socket_data.drop(columns="index", inplace=True)
-    socket_data.index.name = "id"
+    point_data.columns = [c[0] for c in point_data.columns]
+    point_data.dropna(subset=["Steckertypen", "Leistungskapazität", "PublicKey"], how='all', inplace=True)
+    point_data.sort_values("column_id", inplace=True)
+    point_data.reset_index(inplace=True)
+    point_data.drop(columns="index", inplace=True)
+    point_data.index.name = "id"
 
-    socket_filename = SOCKET_DATA.format(dd=dd, mm=mm, yyyy=yyyy)
+    point_filename = SOCKET_DATA.format(dd=dd, mm=mm, yyyy=yyyy)
     column_filename = COLUMN_DATA.format(dd=dd, mm=mm, yyyy=yyyy)
     operator_filename = OPERATOR_DATA.format(dd=dd, mm=mm, yyyy=yyyy)
     location_filename = LOCATION_DATA.format(dd=dd, mm=mm, yyyy=yyyy)
-    # socket_data["types_temp"] = socket_data["Steckertypen"].str.replace(";", ",").str.split(",").apply(lambda lst: ",".join([CONNECTION_TYPE_MAP.get(itm.strip(), "") for itm in lst]))
-    # socket_types = [item.strip() for sublist in list(str(u).replace(";", ",").split(",") for u in socket_data["Steckertypen"].unique()) for item in sublist]
+    # point_data["types_temp"] = point_data["Steckertypen"].str.replace(";", ",").fillna("").str.split(",").apply(lambda lst: ",".join([CONNECTION_TYPE_MAP.get(itm.strip(), itm.strip()) for itm in lst]))
+    # socket_types = set(item.strip() for sublist in list(str(u).replace(";", ",").split(",") for u in point_data["types_temp"].unique()) for item in sublist)
 
     # Separate operators
     column_data["Betreiber"] = column_data["Betreiber"].str.strip()
@@ -160,11 +160,11 @@ def get_normalised_data(download_date: tuple = None):
 
     # socket data
     # get file schema
-    socket_schema = fl.Schema.describe(socket_data)
-    socket_dict = socket_schema.to_dict()
+    point_schema = fl.Schema.describe(point_data)
+    point_dict = point_schema.to_dict()
 
-    socket_fields = OrderedDict(
-        {f["name"]: f for f in socket_dict["fields"]}
+    point_fields = OrderedDict(
+        {f["name"]: f for f in point_dict["fields"]}
     )
 
     reference_fields = {"Steckertypen1": "Steckertypen", "P1 [kW]":"Leistungskapazität", "Public Key1":"PublicKey"}
@@ -172,22 +172,22 @@ def get_normalised_data(download_date: tuple = None):
     annotation_fields["id"] = {"description": "Unique identifier"}
     annotation_fields["column_id"] = {"description": "Identifier of column"}
     for k,v in annotation_fields.items():
-        socket_fields[reference_fields.get(k,k)].update(v)
-        socket_fields[reference_fields.get(k,k)]["name"] = reference_fields.get(k,k)
-        socket_fields[reference_fields.get(k,k)]["description"] = socket_fields[reference_fields.get(k,k)]["description"].replace(" first", "")
-    if "id" in socket_fields:
-        if "constraints" in socket_fields["id"]:
-            socket_fields["id"].pop("constraints")
+        point_fields[reference_fields.get(k,k)].update(v)
+        point_fields[reference_fields.get(k,k)]["name"] = reference_fields.get(k,k)
+        point_fields[reference_fields.get(k,k)]["description"] = point_fields[reference_fields.get(k,k)]["description"].replace(" first", "")
+    if "id" in point_fields:
+        if "constraints" in point_fields["id"]:
+            point_fields["id"].pop("constraints")
 
-    socket_fields_list = [v for v in socket_fields.values()]
-    socket_resource = {
+    point_fields_list = [v for v in point_fields.values()]
+    point_resource = {
         "profile": "tabular-data-resource",
-        "name": socket_filename,
-        "path": f"{socket_filename}.csv",
+        "name": point_filename,
+        "path": f"{point_filename}.csv",
         "format": "csv",
         "encoding": "utf-8",
         "schema": {
-            "fields": socket_fields_list,
+            "fields": point_fields_list,
             "primaryKey": ["id"],
             "foreignKeys": [
                 {"fields": [ci],
@@ -257,23 +257,23 @@ def get_normalised_data(download_date: tuple = None):
     annotations_new["title"] = "FAIR Charging Station data (Normalised)"
     annotations_new["description"] = "Normalised dataset based on the BNetzA charging station data."
     annotations_new["publicationDate"] = f"{yyyy}-{mm}-{dd}"
-    annotations_new["resources"] = [column_resource, socket_resource, operator_resource, location_resource]
+    annotations_new["resources"] = [column_resource, point_resource, operator_resource, location_resource]
 
     dialect1_5 = OEP_V_1_5_Dialect()
     compiled_metadata = dialect1_5.compile(annotations_new)
 
-    return column_data, socket_data, operator_data, location_data, column_filename, socket_filename, operator_filename, location_filename, compiled_metadata, (dd, mm, yyyy)
+    return column_data, point_data, operator_data, location_data, column_filename, point_filename, operator_filename, location_filename, compiled_metadata, (dd, mm, yyyy)
 
 def main():
 
-    column_data, socket_data, operator_data, location_data, column_filename, socket_filename, operator_filename, location_filename, compiled_metadata, (dd, mm, yyyy) = get_normalised_data()
+    column_data, point_data, operator_data, location_data, column_filename, point_filename, operator_filename, location_filename, compiled_metadata, (dd, mm, yyyy) = get_normalised_data()
     # export
 
     if not path.exists(f"{NORMALISEDIR}"):
         mkdir(NORMALISEDIR)
 
     column_data.to_csv(f"{NORMALISEDIR}/{column_filename}.csv")
-    socket_data.to_csv(f"{NORMALISEDIR}/{socket_filename}.csv")
+    point_data.to_csv(f"{NORMALISEDIR}/{point_filename}.csv")
     operator_data.to_csv(f"{NORMALISEDIR}/{operator_filename}.csv")
     location_data.to_csv(f"{NORMALISEDIR}/{location_filename}.csv")
 
