@@ -10,28 +10,31 @@ from copy import deepcopy
 from omi.dialects.oep.dialect import OEP_V_1_5_Dialect
 import json
 from os import mkdir, path
+import numpy as np
 
 COLUMN_DATA = "bnetza_charging_columns_{dd}_{mm}_{yyyy}"
-SOCKET_DATA = "bnetza_charging_points_{dd}_{mm}_{yyyy}"
+POINT_DATA = "bnetza_charging_points_{dd}_{mm}_{yyyy}"
 OPERATOR_DATA = "bnetza_operators_{dd}_{mm}_{yyyy}"
 LOCATION_DATA = "bnetza_locations_{dd}_{mm}_{yyyy}"
 NORMALIZED_FILENAME = "bnetza_charging_stations_normalised_{dd}_{mm}_{yyyy}"
+COMPATIBILITY_DATA =  "bnetza_compatibility_{dd}_{mm}_{yyyy}"
+SOCKET_DATA =  "bnetza_charging_sockets_{dd}_{mm}_{yyyy}"
 NORMALISEDIR = "normalised"
 
 CONNECTION_TYPE_MAP = {
-    "DC Kupplung Tesla Typ 2": "DC_type2_cablefemale_tesla",
-    "AC CEE 3 polig": "AC_CEE3polig",
-    "AC CEE 5 polig": "AC_CEE5polig",
-    "CEE-Stecker": "AC_CEE_socketmale",
-    "AC / CEE": "AC_CEE",
-    "DC Kupplung Combo": "DC_CCS_cablefemale",
-    "Adapter Typ1 \xa0Auto auf Typ2 Fahrzeugkupplung": "AC_type1",
-    "AC Kupplung Typ 2": "AC_type2_cablefemale",
-    "AC Steckdose Typ 2": "AC_type2_socketmale",
-    "Typ 2 / Tesla": "DC_type2_cablefemale_tesla",
-    "Tesla": "DC_type2_cablefemale_tesla",
-    "AC Schuko": "AC_Schuko",
-    "DC CHAdeMO": "DC_CHadeMO"
+    "DC Kupplung Tesla Typ 2": "DC_type2_cablefemale_tesla_4",
+    "AC CEE 3 polig": "AC_CEE3polig_None_None_None",
+    "AC CEE 5 polig": "AC_CEE5polig_None_None_None",
+    "CEE-Stecker": "AC_CEE_socketmale_None_None",
+    "AC / CEE": "AC_CEE_None_None_None",
+    "DC Kupplung Combo": "DC_CCS_cablefemale_None_4",
+    "Adapter Typ1 \xa0Auto auf Typ2 Fahrzeugkupplung": "AC_type1_None_None_2",
+    "AC Kupplung Typ 2": "AC_type2_cablefemale_Mennekes_4",
+    "AC Steckdose Typ 2": "AC_type2_socketmale_Mennekes_3",
+    "Typ 2 / Tesla": "DC_type2_cablefemale_tesla_4",
+    "Tesla": "DC_type2_cablefemale_tesla_4",
+    "AC Schuko": "AC_Schuko_None_None_2",
+    "DC CHAdeMO": "DC_CHadeMO_cablefemale_CHadeMO_4"
 
 }
 
@@ -46,6 +49,8 @@ def get_normalised_data(download_date: tuple = None):
     ci = "column_id"
     oi = "operator_id"
     li = "location_id"
+    pi = "point_id"
+    si = "socket_id"
     column_names = [ci , "Steckertypen", "Leistungskapazität", "PublicKey"]
     point_data_1 = df.iloc[:,14:17].reset_index().rename(columns={"id": ci})
     point_data_1.columns = [column_names]
@@ -65,13 +70,27 @@ def get_normalised_data(download_date: tuple = None):
     point_data.drop(columns="index", inplace=True)
     point_data.index.name = "id"
 
-    point_filename = SOCKET_DATA.format(dd=dd, mm=mm, yyyy=yyyy)
+    point_filename = POINT_DATA.format(dd=dd, mm=mm, yyyy=yyyy)
     column_filename = COLUMN_DATA.format(dd=dd, mm=mm, yyyy=yyyy)
     operator_filename = OPERATOR_DATA.format(dd=dd, mm=mm, yyyy=yyyy)
     location_filename = LOCATION_DATA.format(dd=dd, mm=mm, yyyy=yyyy)
-    # point_data["types_temp"] = point_data["Steckertypen"].str.replace(";", ",").fillna("").str.split(",").apply(lambda lst: ",".join([CONNECTION_TYPE_MAP.get(itm.strip(), itm.strip()) for itm in lst]))
-    # socket_types = set(item.strip() for sublist in list(str(u).replace(";", ",").split(",") for u in point_data["types_temp"].unique()) for item in sublist)
+    socket_filename = SOCKET_DATA.format(dd=dd, mm=mm, yyyy=yyyy)
+    compatibility_filename = COMPATIBILITY_DATA.format(dd=dd, mm=mm, yyyy=yyyy)
 
+    point_data["types_temp"] = point_data["Steckertypen"].str.replace(";", ",").fillna("").str.split(",").apply(lambda lst: ",".join([CONNECTION_TYPE_MAP.get(itm.strip(), itm.strip()) for itm in lst]))
+    socket_types = [it for it in set(item.strip() for sublist in list(str(u).replace(";", ",").split(",") for u in point_data["types_temp"].unique()) for item in sublist) if len(it) > 0]
+    socket_data = pd.DataFrame({"name": socket_types})
+    socket_data[["current", "pattern", "connector", "maker", "mode"]] = socket_data["name"].str.split("_", expand=True)
+    socket_data = socket_data.applymap(lambda v: v if v != "None" else None)
+    socket_data.index.name = "id"
+
+    compatibility_base = pd.DataFrame([(tup.id, t) for tup in point_data.reset_index().itertuples() for t in tup.types_temp.split(",") if len(t)>0])
+    compatibility_base.columns = ["point_id", "socket_type"]
+    compatibility_data = pd.merge(compatibility_base, socket_data.reset_index()[["id", "name"]], left_on="socket_type", right_on="name", how="left").rename(columns={"id": "socket_id"}).drop(columns=["socket_type", "name"])
+    compatibility_data.index.name = "id"
+
+    point_data.drop(columns=["types_temp", "Steckertypen"], inplace=True)
+    socket_data.drop(columns=["name"], inplace=True)
     # Separate operators
     column_data["Betreiber"] = column_data["Betreiber"].str.strip()
     operator_data = pd.DataFrame({"Betreiber": column_data["Betreiber"].unique()})
@@ -167,7 +186,7 @@ def get_normalised_data(download_date: tuple = None):
         {f["name"]: f for f in point_dict["fields"]}
     )
 
-    reference_fields = {"Steckertypen1": "Steckertypen", "P1 [kW]":"Leistungskapazität", "Public Key1":"PublicKey"}
+    reference_fields = {"P1 [kW]":"Leistungskapazität", "Public Key1":"PublicKey"} # "Steckertypen1": "Steckertypen",
     annotation_fields = {f["name"]: f for f in annotations["resources"][0]["schema"]["fields"] if f["name"] in reference_fields.keys()}
     annotation_fields["id"] = {"description": "Unique identifier"}
     annotation_fields["column_id"] = {"description": "Identifier of column"}
@@ -251,31 +270,121 @@ def get_normalised_data(download_date: tuple = None):
             "primaryKey": ["id"]
         }
     }
+    # socket data
+    socket_schema = fl.Schema.describe(socket_data)
+    socket_dict = socket_schema.to_dict()
+
+    socket_fields = OrderedDict(
+        {f["name"]: f for f in socket_dict["fields"]}
+    )
+
+    annotation_fields = {f["name"]: f for f in annotations["resources"][0]["schema"]["fields"] if f["name"] in socket_fields.keys()}
+    annotation_fields["id"] = {"description": "Unique identifier"}
+    annotation_fields["current"] = {"description": "Current mode of the socket"}
+    annotation_fields["pattern"] = {"description": "Connection pattern of the connector"}
+    annotation_fields["connector"] = {"description": "Type of coupling"}
+    annotation_fields["maker"] = {"description": "Developer of the socket type"}
+    annotation_fields["mode"] = {"description": "Charging mode of the connector"}
+    for k,v in annotation_fields.items():
+        socket_fields[k].update(v)
+    if "id" in socket_fields:
+        if "constraints" in socket_fields["id"]:
+            socket_fields["id"].pop("constraints")
+    socket_field_list = [v for v in socket_fields.values()]
+    socket_resource = {
+        "profile": "tabular-data-resource",
+        "name": socket_filename,
+        "path": f"{socket_filename}.csv",
+        "format": "csv",
+        "encoding": "utf-8",
+        "schema": {
+            "fields": socket_field_list,
+            "primaryKey": ["id"]
+        }
+    }
+
+
+    # compatibility data
+    # get  file schema
+    compatibility_schema = fl.Schema.describe(compatibility_data)
+    compatibility_dict = compatibility_schema.to_dict()
+
+    compatibility_fields = OrderedDict(
+        {f["name"]: f for f in compatibility_dict["fields"]}
+    )
+    annotation_fields = {f["name"]: f for f in annotations["resources"][0]["schema"]["fields"] if f["name"] in compatibility_fields.keys()}
+    annotation_fields[pi] = {"description": "Identifier of the charging point"}
+    annotation_fields[si] = {"description": "Identifier of the compatible sockets."}
+
+    annotation_fields["id"] = {"description": "Unique identifier"}
+    for k,v in annotation_fields.items():
+        compatibility_fields[k].update(v)
+    if "id" in compatibility_fields:
+        if "constraints" in compatibility_fields["id"]:
+            compatibility_fields["id"].pop("constraints")
+    compatibility_fields_list = [v for v in compatibility_fields.values()]
+    compatibility_resource = {
+        "profile": "tabular-data-resource",
+        "name": compatibility_filename,
+        "path": f"{compatibility_filename}.csv",
+        "format": "csv",
+        "encoding": "utf-8",
+        "schema": {
+            "fields": compatibility_fields_list,
+            "primaryKey": ["id"],
+            "foreignKeys": [
+                {"fields": [pi],
+                  "reference": {
+                      "resource": point_filename,
+                      "fields": ["id"]
+                  }},
+                {"fields": [si],
+                  "reference": {
+                      "resource": socket_filename,
+                      "fields": ["id"]
+                  }}
+            ]
+        }
+    }
 
     annotations_new = deepcopy(annotations)
     annotations_new["name"] = f"{NORMALIZED_FILENAME.format(mm=mm, dd=dd, yyyy=yyyy)}"
     annotations_new["title"] = "FAIR Charging Station data (Normalised)"
     annotations_new["description"] = "Normalised dataset based on the BNetzA charging station data."
     annotations_new["publicationDate"] = f"{yyyy}-{mm}-{dd}"
-    annotations_new["resources"] = [column_resource, point_resource, operator_resource, location_resource]
+    annotations_new["resources"] = [column_resource, point_resource, operator_resource, location_resource, socket_resource, compatibility_resource]
 
     dialect1_5 = OEP_V_1_5_Dialect()
     compiled_metadata = dialect1_5.compile(annotations_new)
 
-    return column_data, point_data, operator_data, location_data, column_filename, point_filename, operator_filename, location_filename, compiled_metadata, (dd, mm, yyyy)
+    data = {
+        "column": column_data,
+        "point": point_data,
+        "operator": operator_data,
+        "location": location_data,
+        "socket": socket_data,
+        "compatibility": compatibility_data
+    }
+    filenames = {
+        "column": column_filename,
+        "point": point_filename,
+        "operator": operator_filename,
+        "location": location_filename,
+        "socket": socket_filename,
+        "compatibility": compatibility_filename
+    }
+    return data, filenames, compiled_metadata, (dd, mm, yyyy)
 
 def main():
 
-    column_data, point_data, operator_data, location_data, column_filename, point_filename, operator_filename, location_filename, compiled_metadata, (dd, mm, yyyy) = get_normalised_data()
+    data, filenames, compiled_metadata, (dd, mm, yyyy) = get_normalised_data()
     # export
 
     if not path.exists(f"{NORMALISEDIR}"):
         mkdir(NORMALISEDIR)
 
-    column_data.to_csv(f"{NORMALISEDIR}/{column_filename}.csv")
-    point_data.to_csv(f"{NORMALISEDIR}/{point_filename}.csv")
-    operator_data.to_csv(f"{NORMALISEDIR}/{operator_filename}.csv")
-    location_data.to_csv(f"{NORMALISEDIR}/{location_filename}.csv")
+    for element in data.keys():
+        data[element].to_csv(f"{NORMALISEDIR}/{filenames[element]}.csv")
 
     with open(f"{NORMALISEDIR}/{NORMALIZED_FILENAME.format(mm=mm, dd=dd, yyyy=yyyy)}.json", "w", encoding="utf8") as output:
         json.dump(compiled_metadata, output, indent=4, ensure_ascii=False)
