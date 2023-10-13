@@ -26,7 +26,7 @@ python src/clean.py
 ```
 To get the proper data run the scripts in the following order:
 
-0. download (Data has to be downloaded manually, sorry but the BNetzA website is not fond of automatic requests.)
+0. load (Data has to be downloaded manually, sorry but the BNetzA website is not fond of automatic requests.)
 1. clean
 2. annotate
 3. normalise
