@@ -30,7 +30,7 @@ def get_clean_data(download_date: tuple = None):
 
         # cleaning mixed types in column, looks clunky but dom't know a more transparent way, the data is just too heterogeneous.
         # Some column have string numbers, some use commas to separate decimals and some use points.
-        df["Anschlussleistung"] = df["Anschlussleistung"].astype("string").str.replace(",", ".").astype(float)
+        df["Nennleistung Ladeeinrichtung [kW]"] = df["Nennleistung Ladeeinrichtung [kW]"].astype("string").str.replace(",", ".").astype(float)
         df["P1 [kW]"] = df["P1 [kW]"].astype("string").str.replace(",", ".").astype(float)
         df["P2 [kW]"]  = df["P2 [kW]"] .astype("string").str.replace(",", ".").astype(float)
         df["P4 [kW]"] = df["P4 [kW]"].astype("string").str.replace(",", ".").str.replace("                 ", "NaN").astype(float)

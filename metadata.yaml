@@ -102,7 +102,7 @@ resources:
               isAbout:
                 - name: comissioning date
                   path: https://openenergy-platform.org/missing_term
-            - name: Anschlussleistung
+            - name: Nennleistung Ladeeinrichtung [kW]
               description: Declared net capacity in KW.
               unit: kW
               isAbout:
