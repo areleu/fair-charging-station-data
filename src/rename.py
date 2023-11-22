@@ -7,7 +7,7 @@ import json
 from os import mkdir, path
 
 DEBUG = False
-OEP = False
+OEP = True
 
 OEPDIR_DEFAULT = "oep_default"
 OEPDIR_NORMAL = "oep_normal"
