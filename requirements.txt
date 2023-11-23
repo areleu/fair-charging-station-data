@@ -4,3 +4,4 @@ frictionless
 omi
 openpyxl
 jsonschema_rs
+oep-client
