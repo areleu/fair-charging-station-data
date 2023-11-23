@@ -1,3 +1,4 @@
+[![DOI](https://zenodo.org/badge/705543008.svg)](https://zenodo.org/doi/10.5281/zenodo.10201023)
 # FAIR Charging Station Data
 
 This repository produces two clean datasets for Charging station data based on
