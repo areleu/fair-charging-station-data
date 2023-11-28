@@ -25,7 +25,7 @@ COLUMN_RENAME = {
     "Kreis/kreisfreie Stadt": "county",
     "Breitengrad": "latitude",
     "Längengrad": "longitude",
-    "Inbetriebnahmedatum": "comissioning_date",
+    "Inbetriebnahmedatum": "commissioning_date",
     "Nennleistung Ladeeinrichtung [kW]": "net_capacity",
     "Art der Ladeeinrichung": "column_type",
     "Anzahl Ladepunkte": "charger_amount",

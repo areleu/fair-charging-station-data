@@ -98,9 +98,9 @@ resources:
                 - name: longitude
                   path: https://www.w3.org/2003/01/geo/wgs84_pos#longitude
             - name: Inbetriebnahmedatum
-              description: Comissioning date of the station.
+              description: Commissioning date of the station.
               isAbout:
-                - name: comissioning date
+                - name: commissioning date
                   path: https://openenergy-platform.org/missing_term
             - name: Nennleistung Ladeeinrichtung [kW]
               description: Declared net capacity in KW.

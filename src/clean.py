@@ -25,6 +25,7 @@ def get_clean_data(download_date: tuple = None):
 
     if not path.exists(f"{FAIRDIR}/{filename}.csv"):
         df = pd.read_excel(excel, header=10)
+        # to measure duplicated capacity: df[df.duplicated()]["Nennleistung Ladeeinrichtung [kW]"].sum()
         df = df.drop_duplicates(ignore_index=True)
 
 

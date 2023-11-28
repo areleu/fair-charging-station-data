@@ -35,7 +35,7 @@ table_schema = {
         {"name": "county", "data_type": "varchar(50)"},
         {"name": "latitude", "data_type": "decimal"},        
         {"name": "longitude", "data_type": "decimal"},
-        {"name": "comissioning_date", "data_type": "date"},
+        {"name": "commissioning_date", "data_type": "date"},
         {"name": "net_capacity", "data_type": "float(14)"},        
         {"name": "column_type", "data_type": "varchar(10)"},
         {"name": "charger_amount", "data_type": "smallint"},
@@ -65,7 +65,7 @@ my_list = [
            "county", 
            "latitude", 
            "longitude",
-           "comissioning_date",
+           "commissioning_date",
            "net_capacity",
            "column_type",
            "charger_amount",
@@ -82,7 +82,7 @@ my_list = [
            "charger_power_4",
            "charger_public_key_4"]
 # %%
-station_data["comissioning_date"] = station_data["comissioning_date"].dt.strftime("%Y-%m-%d")
+station_data["commissioning_date"] = station_data["commissioning_date"].dt.strftime("%Y-%m-%d")
 station_data = station_data.where(pd.notnull(station_data), None)
 station_data['charger_power_2'] = station_data['charger_power_2'].replace(np.nan, None)
 station_data['charger_power_3'] = station_data['charger_power_3'].replace(np.nan, None)
