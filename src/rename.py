@@ -7,7 +7,7 @@ import json
 from os import mkdir, path
 
 DEBUG = False
-OEP = True
+OEP = True # The OEP format is not entirely compatible with frictionless, change to False to generate a frictionless dataset.
 
 OEPDIR_DEFAULT = "oep_default"
 OEPDIR_NORMAL = "oep_normal"
