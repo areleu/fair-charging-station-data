@@ -14,7 +14,7 @@ METADATA_GENERIC = "https://raw.githubusercontent.com/OpenEnergyPlatform/oemetad
 
 METADATA_VERSIONS = ["v130", "v140", "v141", "v150", "v151", "v152"]
 
-LATEST_METADATA = "v152"
+LATEST_METADATA = "v160"
 
 LOCAL_PATH = "metadata/metadata_{}.json"
 
