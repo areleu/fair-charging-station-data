@@ -63,7 +63,7 @@ def get_clean_data(download_date: tuple = None):
             sep=",",
             decimal=".",
             encoding="utf-8",
-            date_format="%Y-%m-%d",
+            date_format="%Y-%m-%d %H:%M:%S",
             index=False,
         )
     else:
