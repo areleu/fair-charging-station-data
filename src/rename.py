@@ -427,7 +427,10 @@ def main():
         mkdir(OEPDIR_NORMAL)
     if not DEBUG:
         for element in data.keys():
-            data[element].to_csv(f"{OEPDIR_NORMAL}/{filenames[element]}.csv")
+            data[element].to_csv(
+                f"{OEPDIR_NORMAL}/{filenames[element]}.csv",
+                date_format="%Y-%m-%d %H:%M:%S",
+            )
 
         with open(
             f"{OEPDIR_NORMAL}/{OEP_NORMAL_FILENAME.format(mm=mm, dd=dd, yyyy=yyyy)}.json",
@@ -446,7 +449,11 @@ def main():
         mkdir(OEPDIR_DEFAULT)
     if DEBUG:
         station_data = station_data.head(10)
-    station_data.to_csv(f"{OEPDIR_DEFAULT}/{station_filename}.csv", index=OEP)
+    station_data.to_csv(
+        f"{OEPDIR_DEFAULT}/{station_filename}.csv",
+        index=OEP,
+        date_format="%Y-%m-%d %H:%M:%S",
+    )
 
     with open(
         f"{OEPDIR_DEFAULT}/{OEP_REGULAR_FILEANAME.format(mm=mm, dd=dd, yyyy=yyyy)}.json",
