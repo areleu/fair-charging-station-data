@@ -28,35 +28,61 @@ def get_clean_data(download_date: tuple = None):
         # to measure duplicated capacity: df[df.duplicated()]["Nennleistung Ladeeinrichtung [kW]"].sum()
         df = df.drop_duplicates(ignore_index=True)
 
-
         # cleaning mixed types in column, looks clunky but dom't know a more transparent way, the data is just too heterogeneous.
         # Some column have string numbers, some use commas to separate decimals and some use points.
-        df["Nennleistung Ladeeinrichtung [kW]"] = df["Nennleistung Ladeeinrichtung [kW]"].astype("string").str.replace(",", ".").astype(float)
-        df["P1 [kW]"] = df["P1 [kW]"].astype("string").str.replace(",", ".").astype(float)
-        df["P2 [kW]"]  = df["P2 [kW]"] .astype("string").str.replace(",", ".").astype(float)
-        df["P4 [kW]"] = df["P4 [kW]"].astype("string").str.replace(",", ".").str.replace("                 ", "NaN").astype(float)
+        df["Nennleistung Ladeeinrichtung [kW]"] = (
+            df["Nennleistung Ladeeinrichtung [kW]"]
+            .astype("string")
+            .str.replace(",", ".")
+            .astype(float)
+        )
+        df["P1 [kW]"] = (
+            df["P1 [kW]"].astype("string").str.replace(",", ".").astype(float)
+        )
+        df["P2 [kW]"] = (
+            df["P2 [kW]"].astype("string").str.replace(",", ".").astype(float)
+        )
+        df["P4 [kW]"] = (
+            df["P4 [kW]"]
+            .astype("string")
+            .str.replace(",", ".")
+            .str.replace("                 ", "NaN")
+            .astype(float)
+        )
 
-        df["Breitengrad"]  = df["Breitengrad"].astype("string").str.replace(",", ".").astype(float)
-        df["Längengrad"]  = df["Längengrad"].astype("string").str.replace(",", ".").astype(float)
+        df["Breitengrad"] = (
+            df["Breitengrad"].astype("string").str.replace(",", ".").astype(float)
+        )
+        df["Längengrad"] = (
+            df["Längengrad"].astype("string").str.replace(",", ".").astype(float)
+        )
         # Replace cleaning steps when the source is changed
         # Drop all duplicates
-
+        df["Inbetriebnahmedatum"] = pd.to_datetime(df["Inbetriebnahmedatum"])
         df.to_csv(
             f"{FAIRDIR}/{filename}.csv",
             sep=",",
             decimal=".",
             encoding="utf-8",
+            date_format="%Y-%m-%d",
             index=False,
         )
     else:
-        df = pd.read_csv(f"{FAIRDIR}/{filename}.csv", decimal=".", sep=",", encoding="utf-8")
+        df = pd.read_csv(
+            f"{FAIRDIR}/{filename}.csv", decimal=".", sep=",", encoding="utf-8"
+        )
     # Datetime format
-    df["Inbetriebnahmedatum"]= pd.to_datetime(df["Inbetriebnahmedatum"])
+    df["Inbetriebnahmedatum"] = pd.to_datetime(df["Inbetriebnahmedatum"])
 
     # There is an incongruency between charging points declared and the ones given in the point list
     # TODO: Is it reasonable to replace the declared number with the actual values?
     # df["counted"] = (~ df["Steckertypen1"].isna()).astype(int) + (~ df["Steckertypen2"].isna()).astype(int) + (~ df["Steckertypen3"].isna()).astype(int) + (~ df["Steckertypen4"].isna()).astype(int)
-    df["Anzahl Ladepunkte"] = (~ df["Steckertypen1"].isna()).astype(int) + (~ df["Steckertypen2"].isna()).astype(int) + (~ df["Steckertypen3"].isna()).astype(int) + (~ df["Steckertypen4"].isna()).astype(int)
+    df["Anzahl Ladepunkte"] = (
+        (~df["Steckertypen1"].isna()).astype(int)
+        + (~df["Steckertypen2"].isna()).astype(int)
+        + (~df["Steckertypen3"].isna()).astype(int)
+        + (~df["Steckertypen4"].isna()).astype(int)
+    )
     return df, filename, (dd, mm, yyyy)
 
 
