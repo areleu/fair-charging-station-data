@@ -49,9 +49,14 @@ def get_clean_data(download_date: tuple = None):
             .str.replace("                 ", "NaN")
             .astype(float)
         )
-
+        # The version from 16.07.2024 has a format issue in one entry that breaks this part of the script
+        # because of this we strip
         df["Breitengrad"] = (
-            df["Breitengrad"].astype("string").str.replace(",", ".").astype(float)
+            df["Breitengrad"]
+            .astype("string")
+            .str.replace(",", ".")
+            .str.strip(".")
+            .astype(float)
         )
         df["Längengrad"] = (
             df["Längengrad"].astype("string").str.replace(",", ".").astype(float)

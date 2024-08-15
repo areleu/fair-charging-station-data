@@ -1,5 +1,9 @@
 # CHANGELOG
 
+# 15.08.2024
+
+- Added cleaning case for version published in 16.07.2024
+
 # 25.07.2023
 - Removed download script completely.
 - Added copy right
