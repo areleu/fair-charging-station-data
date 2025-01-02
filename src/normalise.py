@@ -52,17 +52,29 @@ def get_normalised_data(download_date: tuple = None):
     pi = "point_id"
     si = "socket_id"
     column_names = [ci, "Steckertypen", "Leistungskapazität", "PublicKey"]
-    point_data_1 = df.iloc[:, 14:17].reset_index().rename(columns={"id": ci})
+    point_data_1 = df.iloc[:, 15:18].reset_index().rename(columns={"id": ci})
     point_data_1.columns = [column_names]
-    point_data_2 = df.iloc[:, 17:20].reset_index().rename(columns={"id": ci})
+    point_data_2 = df.iloc[:, 18:21].reset_index().rename(columns={"id": ci})
     point_data_2.columns = [column_names]
-    point_data_3 = df.iloc[:, 20:23].reset_index().rename(columns={"id": ci})
+    point_data_3 = df.iloc[:, 21:24].reset_index().rename(columns={"id": ci})
     point_data_3.columns = [column_names]
-    point_data_4 = df.iloc[:, 23:26].reset_index().rename(columns={"id": ci})
+    point_data_4 = df.iloc[:, 24:27].reset_index().rename(columns={"id": ci})
     point_data_4.columns = [column_names]
+    point_data_5 = df.iloc[:, 27:30].reset_index().rename(columns={"id": ci})
+    point_data_5.columns = [column_names]
+    point_data_6 = df.iloc[:, 30:33].reset_index().rename(columns={"id": ci})
+    point_data_6.columns = [column_names]
 
     point_data = pd.concat(
-        [point_data_1, point_data_2, point_data_3, point_data_4], ignore_index=True
+        [
+            point_data_1,
+            point_data_2,
+            point_data_3,
+            point_data_4,
+            point_data_5,
+            point_data_6,
+        ],
+        ignore_index=True,
     )
 
     point_data.columns = [c[0] for c in point_data.columns]

@@ -52,6 +52,11 @@ resources:
               isAbout:
                 - name: organisation
                   path: http://openenergy-platform.org/ontology/oeo/OEO_00030022
+            - name: Anzeigename (Karte)
+              description: Display name.
+              isAbout:
+                - name: label
+                  path: http://www.w3.org/2000/01/rdf-schema#label
             - name: Straße
               description: The name of a passage or way through from one location to another.
               isAbout:
@@ -186,6 +191,38 @@ resources:
                   path: http://openenergy-platform.org/ontology/oeo/OEO_00010257
             - name: Public Key4
               description: Public key of the fourth charging point.
+              isAbout:
+                - name: public key
+                  path: https://openenergy-platform.org/missing_term
+            - name: Steckertypen5
+              description: Type of socket of the fifth charging point.
+              isAbout:
+                - name: socket type
+                  path: https://openenergy-platform.org/missing_term
+            - name: P5 [kW]
+              description: Power capacity of the fifth charging point.
+              unit: kW
+              isAbout:
+                - name: power capacity
+                  path: http://openenergy-platform.org/ontology/oeo/OEO_00010257
+            - name: Public Key5
+              description: Public key of the fifth charging point.
+              isAbout:
+                - name: public key
+                  path: https://openenergy-platform.org/missing_term
+            - name: Steckertypen6
+              description: Type of socket of the sixth charging point.
+              isAbout:
+                - name: socket type
+                  path: https://openenergy-platform.org/missing_term
+            - name: P6 [kW]
+              description: Power capacity of the sixth charging point.
+              unit: kW
+              isAbout:
+                - name: power capacity
+                  path: http://openenergy-platform.org/ontology/oeo/OEO_00010257
+            - name: Public Key6
+              description: Public key of the sixth charging point.
               isAbout:
                 - name: public key
                   path: https://openenergy-platform.org/missing_term

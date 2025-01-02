@@ -7,7 +7,7 @@ import json
 from os import mkdir, path
 
 DEBUG = False
-OEP = True # The OEP format is not entirely compatible with frictionless, change to False to generate a frictionless dataset.
+OEP = True  # The OEP format is not entirely compatible with frictionless, change to False to generate a frictionless dataset.
 
 OEPDIR_DEFAULT = "oep_default"
 OEPDIR_NORMAL = "oep_normal"
@@ -16,6 +16,7 @@ OEP_REGULAR_FILEANAME = "bnetza_charging_stations_{dd}_{mm}_{yyyy}"
 
 COLUMN_RENAME = {
     "Betreiber": "operator",
+    "Anzeigename (Karte)": "display_name",
     "Straße": "thoroughfare",
     "Hausnummer": "locator_designator",
     "Adresszusatz": "address_supplement",
@@ -41,6 +42,12 @@ COLUMN_RENAME = {
     "Steckertypen4": "charger_type_4",
     "P4 [kW]": "charger_power_4",
     "Public Key4": "charger_public_key_4",
+    "Steckertypen5": "charger_type_5",
+    "P5 [kW]": "charger_power_5",
+    "Public Key5": "charger_public_key_5",
+    "Steckertypen6": "charger_type_6",
+    "P6 [kW]": "charger_power_6",
+    "Public Key6": "charger_public_key_6",
     "Steckertypen": "charger_type",
     "Leistungskapazität": "charger_power",
     "PublicKey": "public_key",

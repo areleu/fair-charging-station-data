@@ -87,6 +87,8 @@ def get_clean_data(download_date: tuple = None):
         + (~df["Steckertypen2"].isna()).astype(int)
         + (~df["Steckertypen3"].isna()).astype(int)
         + (~df["Steckertypen4"].isna()).astype(int)
+        + (~df["Steckertypen5"].isna()).astype(int)
+        + (~df["Steckertypen6"].isna()).astype(int)
     )
     return df, filename, (dd, mm, yyyy)
 
