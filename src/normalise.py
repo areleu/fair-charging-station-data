@@ -7,7 +7,6 @@ import yaml
 import frictionless as fl
 from collections import OrderedDict
 from copy import deepcopy
-from omi.dialects.oep.dialect import OEP_V_1_5_Dialect
 import json
 from os import mkdir, path
 import numpy as np
@@ -441,9 +440,6 @@ def get_normalised_data(download_date: tuple = None):
         compatibility_resource,
     ]
 
-    dialect1_5 = OEP_V_1_5_Dialect()
-    compiled_metadata = dialect1_5.compile(annotations_new)
-
     data = {
         "column": column_data,
         "point": point_data,
@@ -460,12 +456,12 @@ def get_normalised_data(download_date: tuple = None):
         "socket": socket_filename,
         "compatibility": compatibility_filename,
     }
-    return data, filenames, compiled_metadata, (dd, mm, yyyy)
+    return data, filenames, annotations_new, (dd, mm, yyyy)
 
 
 def main():
 
-    data, filenames, compiled_metadata, (dd, mm, yyyy) = get_normalised_data()
+    data, filenames, annotations_new, (dd, mm, yyyy) = get_normalised_data()
     # export
 
     if not path.exists(f"{NORMALISEDIR}"):
@@ -482,7 +478,7 @@ def main():
         "w",
         encoding="utf8",
     ) as output:
-        json.dump(compiled_metadata, output, indent=4, ensure_ascii=False)
+        json.dump(annotations_new, output, indent=4, ensure_ascii=False)
 
 
 if __name__ == "__main__":

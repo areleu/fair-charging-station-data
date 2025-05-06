@@ -47,6 +47,11 @@ resources:
       format: xlsx
       schema:
           fields:
+            - name: Ladeeinrichtungs-ID
+              description: Unique identifier of the charging facility.
+              isAbout:
+                - name: charging station
+                  path: https://dlr-ve-esy.github.io/charging-ontology/CHIO_00000004
             - name: Betreiber
               description: Organisation behind the operation of the station.
               isAbout:
@@ -57,6 +62,11 @@ resources:
               isAbout:
                 - name: label
                   path: http://www.w3.org/2000/01/rdf-schema#label
+            - name: Status
+              description: Operational status of the charging station.
+              isAbout:
+                - name: Stasis of Artifact Operationality
+                  path: https://www.commoncoreontologies.org/ont00001213
             - name: Straße
               description: The name of a passage or way through from one location to another.
               isAbout:
@@ -102,6 +112,21 @@ resources:
               isAbout:
                 - name: longitude
                   path: https://www.w3.org/2003/01/geo/wgs84_pos#longitude
+            - name: Standortbezeichnung
+              description: Location identifier
+              isAbout:
+                - name: spatial location identifier
+                  path: https://www.commoncoreontologies.org/ont00000390
+            - name: Informationen zum Parkraum
+              description: Parking information
+            - name: Bezahlsysteme
+              description: Payment system
+            - name: Öffnungszeiten
+              description: Opening times
+            - name: "Öffnungszeiten: Wochentage"
+              description: Day of the week.
+            - name: "Öffnungszeiten: Tageszeiten"
+              description: Opening hours.
             - name: Inbetriebnahmedatum
               description: Commissioning date of the station.
               isAbout:
@@ -113,7 +138,7 @@ resources:
               isAbout:
                 - name: declared net capacity
                   path: http://openenergy-platform.org/ontology/oeo/OEO_00230002
-            - name: Art der Ladeeinrichung
+            - name: Art der Ladeeinrichtung
               description: Type of charging configuration.
               isAbout:
                 - name: type of column
@@ -135,7 +160,7 @@ resources:
               isAbout:
                 - name: socket type
                   path: https://openenergy-platform.org/missing_term
-            - name: P1 [kW]
+            - name: Nennleistung Stecker1
               description: Power capacity of the first charging point.
               unit: kW
               isAbout:
@@ -151,7 +176,7 @@ resources:
               isAbout:
                 - name: socket type
                   path: https://openenergy-platform.org/missing_term
-            - name: P2 [kW]
+            - name: Nennleistung Stecker2
               description: Power capacity of the second charging point.
               unit: kW
               isAbout:

@@ -5,7 +5,6 @@ from clean import get_clean_data, FAIRDIR
 import frictionless as fl
 import yaml
 from collections import OrderedDict
-from omi.dialects.oep.dialect import OEP_V_1_5_Dialect
 import json
 from os import mkdir, path
 
@@ -60,17 +59,14 @@ def annotate(download_date: tuple = None):
     # Update publication date
     annotations["publicationDate"] = f"{yyyy}-{mm}-{dd}"
 
-    dialect1_5 = OEP_V_1_5_Dialect()
-    compiled_metadata = dialect1_5.compile(annotations)
-
-    return df, filename, compiled_metadata, (dd, mm, yyyy)
+    return df, filename, annotations, (dd, mm, yyyy)
 
 
 
 def main():
-    _, filename, compiled_metadata, (_, _, _) = annotate()
+    _, filename, annotations, (_, _, _) = annotate()
 
     with open(f"{FAIRDIR}/{filename}.json", "w", encoding="utf8") as output:
-        json.dump(compiled_metadata, output, indent=4, ensure_ascii=False)
+        json.dump(annotations, output, indent=4, ensure_ascii=False)
 if __name__ == "__main__":
     main()

@@ -36,18 +36,17 @@ def get_clean_data(download_date: tuple = None):
             .str.replace(",", ".")
             .astype(float)
         )
-        df["P1 [kW]"] = (
-            df["P1 [kW]"].astype("string").str.replace(",", ".").astype(float)
+        df["Nennleistung Stecker1"] = (
+            df["Nennleistung Stecker1"].astype("string").str.replace(",", ".")
         )
-        df["P2 [kW]"] = (
-            df["P2 [kW]"].astype("string").str.replace(",", ".").astype(float)
+        df["Nennleistung Stecker2"] = (
+            df["Nennleistung Stecker2"].astype("string").str.replace(",", ".")
         )
-        df["P4 [kW]"] = (
-            df["P4 [kW]"]
+        df["Nennleistung Stecker3"] = (
+            df["Nennleistung Stecker3"]
             .astype("string")
             .str.replace(",", ".")
             .str.replace("                 ", "NaN")
-            .astype(float)
         )
         # The version from 16.07.2024 has a format issue in one entry that breaks this part of the script
         # because of this we strip
@@ -56,7 +55,6 @@ def get_clean_data(download_date: tuple = None):
             .astype("string")
             .str.replace(",", ".")
             .str.strip(".")
-            .astype(float)
         )
         df["Längengrad"] = (
             df["Längengrad"].astype("string").str.replace(",", ".").astype(float)
