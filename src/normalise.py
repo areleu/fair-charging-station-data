@@ -21,28 +21,22 @@ SOCKET_DATA = "bnetza_charging_sockets_{dd}_{mm}_{yyyy}"
 NORMALISEDIR = "normalised"
 
 CONNECTION_TYPE_MAP = {
-    "DC Kupplung Tesla Typ 2": "DC_type2_cablefemale_tesla_4",
-    "AC CEE 3 polig": "AC_CEE3polig_None_None_None",
-    "AC CEE 5 polig": "AC_CEE5polig_None_None_None",
-    "CEE-Stecker": "AC_CEE_socketmale_None_None",
-    "AC / CEE": "AC_CEE_None_None_None",
-    "DC Kupplung Combo": "DC_CCS_cablefemale_None_4",
-    "Adapter Typ1 \xa0Auto auf Typ2 Fahrzeugkupplung": "AC_type1_None_None_2",
-    "AC Kupplung Typ 2": "AC_type2_cablefemale_Mennekes_4",
-    "AC Steckdose Typ 2": "AC_type2_socketmale_Mennekes_3",
-    "Typ 2 / Tesla": "DC_type2_cablefemale_tesla_4",
-    "Tesla": "DC_type2_cablefemale_tesla_4",
-    "AC Schuko": "AC_Schuko_None_None_2",
-    "DC CHAdeMO": "DC_CHadeMO_cablefemale_CHadeMO_4",
+    "AC Typ 2 Steckdose": "ac_iec62196t2_socket",
+    "AC Typ 2 Fahrzeugkupplung": "ac_iec62196t2_cable",
+    "AC Typ 1 Steckdose": "ac_iec62196t1_socket",
+    "AC Schuko": "ac_domesticf_socket",
+    "DC CHAdeMO": "dc_chademo_socket",
+    "DC Fahrzeugkupplung Typ Combo 2 (CCS)": "dc_iec62196t2combo_cable",
+    "DC Tesla Fahrzeugkupplung (Typ 2)": "dc_tesla_cable"
 }
-
 
 def get_normalised_data(download_date: tuple = None):
     df, filename, (dd, mm, yyyy) = get_clean_data(download_date)
 
+    df = df.set_index("Ladeeinrichtungs-ID")
     df.index.name = "id"
 
-    column_data = df.iloc[:, :14]
+    column_data = df.iloc[:, :22]
 
     # socket data
     ci = "column_id"
@@ -50,35 +44,35 @@ def get_normalised_data(download_date: tuple = None):
     li = "location_id"
     pi = "point_id"
     si = "socket_id"
-    column_names = [ci, "Steckertypen", "Leistungskapazität", "PublicKey"]
-    point_data_1 = df.iloc[:, 15:18].reset_index().rename(columns={"id": ci})
+    column_names = ["Steckertypen", "Leistungskapazität", "EVSE-ID", "Key"]
+    point_data_1 = df.iloc[:, 22:26]
     point_data_1.columns = [column_names]
-    point_data_2 = df.iloc[:, 18:21].reset_index().rename(columns={"id": ci})
+    point_data_2 = df.iloc[:, 26:30]
     point_data_2.columns = [column_names]
-    point_data_3 = df.iloc[:, 21:24].reset_index().rename(columns={"id": ci})
+    point_data_3 = df.iloc[:, 30:34]
     point_data_3.columns = [column_names]
-    point_data_4 = df.iloc[:, 24:27].reset_index().rename(columns={"id": ci})
+    point_data_4 = df.iloc[:, 34:38]
     point_data_4.columns = [column_names]
-    point_data_5 = df.iloc[:, 27:30].reset_index().rename(columns={"id": ci})
+    point_data_5 = df.iloc[:, 38:42]
     point_data_5.columns = [column_names]
-    point_data_6 = df.iloc[:, 30:33].reset_index().rename(columns={"id": ci})
+    point_data_6 = df.iloc[:, 42:46]
     point_data_6.columns = [column_names]
 
     point_data = pd.concat(
         [
-            point_data_1,
-            point_data_2,
-            point_data_3,
-            point_data_4,
-            point_data_5,
-            point_data_6,
+            point_data_1.reset_index(),
+            point_data_2.reset_index(),
+            point_data_3.reset_index(),
+            point_data_4.reset_index(),
+            point_data_5.reset_index(),
+            point_data_6.reset_index(),
         ],
         ignore_index=True,
-    )
+    ).rename(columns={"id": "column_id"})
 
     point_data.columns = [c[0] for c in point_data.columns]
     point_data.dropna(
-        subset=["Steckertypen", "Leistungskapazität", "PublicKey"],
+        subset=column_names,
         how="all",
         inplace=True,
     )
@@ -100,25 +94,30 @@ def get_normalised_data(download_date: tuple = None):
         .fillna("")
         .str.split(",")
         .apply(
-            lambda lst: ",".join(
-                [CONNECTION_TYPE_MAP.get(itm.strip(), itm.strip()) for itm in lst]
-            )
+            lambda lst:[CONNECTION_TYPE_MAP.get(itm.strip(), itm.strip()) for itm in lst]
         )
     )
+    point_data["power_temp"] = (
+        point_data["Leistungskapazität"]
+        .astype(str)
+        .str.split(";")
+        .map(lambda x: [y.replace(",", ".").strip() for y in x])
+    )
+    point_data["sockets_temp"] = point_data.apply(lambda row: ",".join(["_".join(s) for s in zip(row["types_temp"], row["power_temp"])]), axis = 1)
     socket_types = [
         it
         for it in set(
             item.strip()
             for sublist in list(
                 str(u).replace(";", ",").split(",")
-                for u in point_data["types_temp"].unique()
+                for u in point_data["sockets_temp"].unique()
             )
             for item in sublist
         )
         if len(it) > 0
     ]
     socket_data = pd.DataFrame({"name": socket_types})
-    socket_data[["current", "pattern", "connector", "maker", "mode"]] = socket_data[
+    socket_data[["current", "pattern", "connector", "power"]] = socket_data[
         "name"
     ].str.split("_", expand=True)
     socket_data = socket_data.applymap(lambda v: v if v != "None" else None)
