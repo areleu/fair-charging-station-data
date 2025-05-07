@@ -127,7 +127,7 @@ def get_normalised_data(download_date: tuple = None):
         [
             (tup.id, t)
             for tup in point_data.reset_index().itertuples()
-            for t in tup.types_temp.split(",")
+            for t in tup.sockets_temp.split(",")
             if len(t) > 0
         ]
     )
@@ -145,7 +145,7 @@ def get_normalised_data(download_date: tuple = None):
     )
     compatibility_data.index.name = "id"
 
-    point_data.drop(columns=["types_temp", "Steckertypen"], inplace=True)
+    point_data.drop(columns=["types_temp", "power_temp", "sockets_temp", "Steckertypen"], inplace=True)
     socket_data.drop(columns=["name"], inplace=True)
     # Separate operators
     column_data["Betreiber"] = column_data["Betreiber"].str.strip()
@@ -172,6 +172,7 @@ def get_normalised_data(download_date: tuple = None):
         "Ort",
         "Bundesland",
         "Kreis/kreisfreie Stadt",
+        "Standortbezeichnung"
     ]
     numeric_location_columns = ["Postleitzahl", "Breitengrad", "Längengrad"]
     all_locations = location_columns + numeric_location_columns
@@ -256,7 +257,7 @@ def get_normalised_data(download_date: tuple = None):
 
     reference_fields = {
         "P1 [kW]": "Leistungskapazität",
-        "Public Key1": "PublicKey",
+        "Public Key1": "Key",
     }  # "Steckertypen1": "Steckertypen",
     annotation_fields = {
         f["name"]: f
@@ -361,8 +362,9 @@ def get_normalised_data(download_date: tuple = None):
         "description": "Connection pattern of the connector"
     }
     annotation_fields["connector"] = {"description": "Type of coupling"}
-    annotation_fields["maker"] = {"description": "Developer of the socket type"}
-    annotation_fields["mode"] = {"description": "Charging mode of the connector"}
+    annotation_fields["power"] = {"description": "Max power supported by the connector."}
+    # annotation_fields["maker"] = {"description": "Developer of the socket type"}
+    # annotation_fields["mode"] = {"description": "Charging mode of the connector"}
     for k, v in annotation_fields.items():
         socket_fields[k].update(v)
     if "id" in socket_fields:
