@@ -9,8 +9,8 @@ from os import mkdir, path
 DEBUG = False
 OEP = False  # The OEP format is not entirely compatible with frictionless, change to False to generate a frictionless dataset.
 
-OEPDIR_DEFAULT = "oep_default"
-OEPDIR_NORMAL = "oep_normal"
+DEFAULT_DIR = "default"
+ENGLISH_NORMAL = "operational"
 OEP_NORMAL_FILENAME = "bnetza_charging_stations_normalised_{dd}_{mm}_{yyyy}"
 OEP_REGULAR_FILEANAME = "bnetza_charging_stations_{dd}_{mm}_{yyyy}"
 
@@ -443,17 +443,17 @@ def main():
     data, filenames, normalised_compiled_metadata, (dd, mm, yyyy) = (
         get_renamed_normalised(oep=OEP)
     )
-    if not path.exists(f"{OEPDIR_NORMAL}"):
-        mkdir(OEPDIR_NORMAL)
+    if not path.exists(f"{ENGLISH_NORMAL}"):
+        mkdir(ENGLISH_NORMAL)
     if not DEBUG:
         for element in data.keys():
             data[element].to_csv(
-                f"{OEPDIR_NORMAL}/{filenames[element]}.csv",
+                f"{ENGLISH_NORMAL}/{filenames[element]}.csv",
                 date_format="%Y-%m-%d %H:%M:%S",
             )
 
         with open(
-            f"{OEPDIR_NORMAL}/{OEP_NORMAL_FILENAME.format(mm=mm, dd=dd, yyyy=yyyy)}.json",
+            f"{ENGLISH_NORMAL}/{OEP_NORMAL_FILENAME.format(mm=mm, dd=dd, yyyy=yyyy)}.json",
             "w",
             encoding="utf8",
         ) as output:
@@ -465,18 +465,18 @@ def main():
         get_renamed_annotated(oep=OEP)
     )
 
-    if not path.exists(f"{OEPDIR_DEFAULT}"):
-        mkdir(OEPDIR_DEFAULT)
+    if not path.exists(f"{DEFAULT_DIR}"):
+        mkdir(DEFAULT_DIR)
     if DEBUG:
         station_data = station_data.head(10)
     station_data.to_csv(
-        f"{OEPDIR_DEFAULT}/{station_filename}.csv",
+        f"{DEFAULT_DIR}/{station_filename}.csv",
         index=OEP,
         date_format="%Y-%m-%d %H:%M:%S",
     )
 
     with open(
-        f"{OEPDIR_DEFAULT}/{OEP_REGULAR_FILEANAME.format(mm=mm, dd=dd, yyyy=yyyy)}.json",
+        f"{DEFAULT_DIR}/{OEP_REGULAR_FILEANAME.format(mm=mm, dd=dd, yyyy=yyyy)}.json",
         "w",
         encoding="utf8",
     ) as output:
