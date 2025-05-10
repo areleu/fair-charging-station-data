@@ -1,7 +1,6 @@
 # SPDX-FileCopyrightText: Copyright (c) 2023 German Aerospace Center (DLR)
 # SPDX-License-Identifier: BSD-3-Clause
 
-import requests
 from datetime import datetime
 from os import path, mkdir
 

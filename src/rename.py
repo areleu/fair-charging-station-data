@@ -1,25 +1,27 @@
 # SPDX-FileCopyrightText: Copyright (c) 2023 German Aerospace Center (DLR)
 # SPDX-License-Identifier: BSD-3-Clause
 
+from pathlib import Path
 from normalise import get_normalised_data
 from annotate import annotate
 import json
-from os import mkdir, path
 
 DEBUG = False
-OEP = True  # The OEP format is not entirely compatible with frictionless, change to False to generate a frictionless dataset.
+OEP = False  # The OEP format is not entirely compatible with frictionless, change to False to generate a frictionless dataset.
 
-OEPDIR_DEFAULT = "oep_default"
-OEPDIR_NORMAL = "oep_normal"
+DEFAULT_DIR = "default"
+OPERATIONAL_BASE = "operational"
 OEP_NORMAL_FILENAME = "bnetza_charging_stations_normalised_{dd}_{mm}_{yyyy}"
 OEP_REGULAR_FILEANAME = "bnetza_charging_stations_{dd}_{mm}_{yyyy}"
 
 COLUMN_RENAME = {
     "Betreiber": "operator",
+    "Status": "status",
     "Anzeigename (Karte)": "display_name",
     "Straße": "thoroughfare",
     "Hausnummer": "locator_designator",
     "Adresszusatz": "address_supplement",
+    "Standortbezeichnung": "location_description",
     "Postleitzahl": "postcode",
     "Ort": "post_name",
     "Bundesland": "federal_state",
@@ -28,26 +30,37 @@ COLUMN_RENAME = {
     "Längengrad": "longitude",
     "Inbetriebnahmedatum": "commissioning_date",
     "Nennleistung Ladeeinrichtung [kW]": "net_capacity",
-    "Art der Ladeeinrichung": "column_type",
+    "Art der Ladeeinrichtung": "column_type",
+    "Informationen zum Parkraum": "parking_information",
+    "Bezahlsysteme": "paying_system",
+    "Öffnungszeiten": "opening_times",
+    "Öffnungszeiten: Wochentage": "opening_days",
+    "Öffnungszeiten: Tageszeiten": "opeing_hours",
     "Anzahl Ladepunkte": "charger_amount",
     "Steckertypen1": "charger_type_1",
-    "P1 [kW]": "charger_power_1",
+    "Nennleistung Stecker1": "charger_power_1",
     "Public Key1": "charger_public_key_1",
+    "EVSE-ID1": "evse_id_1",
     "Steckertypen2": "charger_type_2",
-    "P2 [kW]": "charger_power_2",
+    "Nennleistung Stecker2": "charger_power_2",
     "Public Key2": "charger_public_key_2",
+    "EVSE-ID2": "evse_id_2",
     "Steckertypen3": "charger_type_3",
-    "P3 [kW]": "charger_power_3",
+    "Nennleistung Stecker3": "charger_power_3",
     "Public Key3": "charger_public_key_3",
+    "EVSE-ID3": "evse_id_3",
     "Steckertypen4": "charger_type_4",
-    "P4 [kW]": "charger_power_4",
+    "Nennleistung Stecker4": "charger_power_4",
     "Public Key4": "charger_public_key_4",
+    "EVSE-ID4": "evse_id_4",
     "Steckertypen5": "charger_type_5",
-    "P5 [kW]": "charger_power_5",
+    "Nennleistung Stecker5": "charger_power_5",
     "Public Key5": "charger_public_key_5",
+    "EVSE-ID5": "evse_id_5",
     "Steckertypen6": "charger_type_6",
-    "P6 [kW]": "charger_power_6",
+    "Nennleistung Stecker6": "charger_power_6",
     "Public Key6": "charger_public_key_6",
+    "EVSE-ID6": "evse_id_6",
     "Steckertypen": "charger_type",
     "Leistungskapazität": "charger_power",
     "PublicKey": "public_key",
@@ -64,10 +77,10 @@ COLUMN_DATATYPE = {
     "Längengrad": "float",
     "Nennleistung Ladeeinrichtung [kW]": "float",
     "Anzahl Ladepunkte": "integer",
-    "P1 [kW]": "float",
-    "P2 [kW]": "float",
-    "P3 [kW]": "float",
-    "P4 [kW]": "float",
+    "Nennleistung Stecker1": "float",
+    "Nennleistung Stecker2": "float",
+    "Nennleistung Stecker3": "float",
+    "Nennleistung Stecker4": "float",
     "Leistungskapazität": "float",
     "id": "integer",
     "column_id": "integer",
@@ -430,17 +443,18 @@ def main():
     data, filenames, normalised_compiled_metadata, (dd, mm, yyyy) = (
         get_renamed_normalised(oep=OEP)
     )
-    if not path.exists(f"{OEPDIR_NORMAL}"):
-        mkdir(OEPDIR_NORMAL)
+    operational_name = Path(f"{OPERATIONAL_BASE}").joinpath(f"DE-{yyyy}{mm}{dd}-BNETZA-BNETZA") 
+    if not operational_name.exists():
+        operational_name.mkdir(exist_ok=True, parents=True)
     if not DEBUG:
         for element in data.keys():
             data[element].to_csv(
-                f"{OEPDIR_NORMAL}/{filenames[element]}.csv",
+                operational_name.joinpath(f"{filenames[element]}.csv"),
                 date_format="%Y-%m-%d %H:%M:%S",
             )
 
         with open(
-            f"{OEPDIR_NORMAL}/{OEP_NORMAL_FILENAME.format(mm=mm, dd=dd, yyyy=yyyy)}.json",
+            operational_name.joinpath(f"{OEP_NORMAL_FILENAME.format(mm=mm, dd=dd, yyyy=yyyy)}.json"),
             "w",
             encoding="utf8",
         ) as output:
@@ -452,18 +466,18 @@ def main():
         get_renamed_annotated(oep=OEP)
     )
 
-    if not path.exists(f"{OEPDIR_DEFAULT}"):
-        mkdir(OEPDIR_DEFAULT)
+    if not (p := Path(f"{DEFAULT_DIR}")).exists():
+        p.mkdir(parents=True, exist_ok=True)
     if DEBUG:
         station_data = station_data.head(10)
     station_data.to_csv(
-        f"{OEPDIR_DEFAULT}/{station_filename}.csv",
+        f"{DEFAULT_DIR}/{station_filename}.csv",
         index=OEP,
         date_format="%Y-%m-%d %H:%M:%S",
     )
 
     with open(
-        f"{OEPDIR_DEFAULT}/{OEP_REGULAR_FILEANAME.format(mm=mm, dd=dd, yyyy=yyyy)}.json",
+        f"{DEFAULT_DIR}/{OEP_REGULAR_FILEANAME.format(mm=mm, dd=dd, yyyy=yyyy)}.json",
         "w",
         encoding="utf8",
     ) as output:
