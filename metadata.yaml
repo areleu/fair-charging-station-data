@@ -171,6 +171,11 @@ resources:
               isAbout:
                 - name: public key
                   path: https://openenergy-platform.org/missing_term
+            - name: EVSE-ID1
+              description: EVSE ID of the first point
+              isAbout:
+                - name: evse id
+                  path: https://openenergy-platform.org/missing_term
             - name: Steckertypen2
               description: Type of socket of the second charging point.
               isAbout:
@@ -187,12 +192,17 @@ resources:
               isAbout:
                 - name: public key
                   path: https://openenergy-platform.org/missing_term
+            - name: EVSE-ID2
+              description: EVSE ID of the second point
+              isAbout:
+                - name: evse id
+                  path: https://openenergy-platform.org/missing_term
             - name: Steckertypen3
               description: Type of socket of the third charging point.
               isAbout:
                 - name: socket type
                   path: https://openenergy-platform.org/missing_term
-            - name: P3 [kW]
+            - name: Nennleistung Stecker3
               description: Power capacity of the third charging point.
               unit: kW
               isAbout:
@@ -203,12 +213,17 @@ resources:
               isAbout:
                 - name: public key
                   path: https://openenergy-platform.org/missing_term
+            - name: EVSE-ID3
+              description: EVSE ID of the third point
+              isAbout:
+                - name: evse id
+                  path: https://openenergy-platform.org/missing_term
             - name: Steckertypen4
               description: Type of socket of the fourth charging point.
               isAbout:
                 - name: socket type
                   path: https://openenergy-platform.org/missing_term
-            - name: P4 [kW]
+            - name: Nennleistung Stecker4
               description: Power capacity of the fourth charging point.
               unit: kW
               isAbout:
@@ -219,12 +234,17 @@ resources:
               isAbout:
                 - name: public key
                   path: https://openenergy-platform.org/missing_term
+            - name: EVSE-ID4
+              description: EVSE ID of the fourth point
+              isAbout:
+                - name: evse id
+                  path: https://openenergy-platform.org/missing_term
             - name: Steckertypen5
               description: Type of socket of the fifth charging point.
               isAbout:
                 - name: socket type
                   path: https://openenergy-platform.org/missing_term
-            - name: P5 [kW]
+            - name: Nennleistung Stecker5
               description: Power capacity of the fifth charging point.
               unit: kW
               isAbout:
@@ -235,12 +255,17 @@ resources:
               isAbout:
                 - name: public key
                   path: https://openenergy-platform.org/missing_term
+            - name: EVSE-ID5
+              description: EVSE ID of the fifth point
+              isAbout:
+                - name: evse id
+                  path: https://openenergy-platform.org/missing_term
             - name: Steckertypen6
               description: Type of socket of the sixth charging point.
               isAbout:
                 - name: socket type
                   path: https://openenergy-platform.org/missing_term
-            - name: P6 [kW]
+            - name: Nennleistung Stecker6
               description: Power capacity of the sixth charging point.
               unit: kW
               isAbout:
@@ -250,6 +275,11 @@ resources:
               description: Public key of the sixth charging point.
               isAbout:
                 - name: public key
+                  path: https://openenergy-platform.org/missing_term
+            - name: EVSE-ID6
+              description: EVSE ID of the sixth point
+              isAbout:
+                - name: evse id
                   path: https://openenergy-platform.org/missing_term
 
 

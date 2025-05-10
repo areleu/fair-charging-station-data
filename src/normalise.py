@@ -145,7 +145,7 @@ def get_normalised_data(download_date: tuple = None):
     )
     compatibility_data.index.name = "id"
 
-    point_data.drop(columns=["types_temp", "power_temp", "sockets_temp", "Steckertypen"], inplace=True)
+    point_data.drop(columns=["types_temp", "power_temp", "sockets_temp", "Steckertypen", "Leistungskapazität"], inplace=True)
     socket_data.drop(columns=["name"], inplace=True)
     # Separate operators
     column_data["Betreiber"] = column_data["Betreiber"].str.strip()
