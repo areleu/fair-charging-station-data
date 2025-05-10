@@ -12,7 +12,7 @@ INPUT_METADATA_FILE = "metadata.yaml"
 if not path.exists(INPUT_METADATA_FILE):
     INPUT_METADATA_FILE = "../metadata.yaml"
 if not path.exists(INPUT_METADATA_FILE):
-    INPUT_METADATA_FILE = "src/fair/metadata.yaml"
+    INPUT_METADATA_FILE = "bnetza/metadata.yaml"
 
 
 
