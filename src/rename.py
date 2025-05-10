@@ -1,16 +1,16 @@
 # SPDX-FileCopyrightText: Copyright (c) 2023 German Aerospace Center (DLR)
 # SPDX-License-Identifier: BSD-3-Clause
 
+from pathlib import Path
 from normalise import get_normalised_data
 from annotate import annotate
 import json
-from os import mkdir, path
 
 DEBUG = False
 OEP = False  # The OEP format is not entirely compatible with frictionless, change to False to generate a frictionless dataset.
 
 DEFAULT_DIR = "default"
-ENGLISH_NORMAL = "operational"
+OPERATIONAL_BASE = "operational"
 OEP_NORMAL_FILENAME = "bnetza_charging_stations_normalised_{dd}_{mm}_{yyyy}"
 OEP_REGULAR_FILEANAME = "bnetza_charging_stations_{dd}_{mm}_{yyyy}"
 
@@ -443,17 +443,18 @@ def main():
     data, filenames, normalised_compiled_metadata, (dd, mm, yyyy) = (
         get_renamed_normalised(oep=OEP)
     )
-    if not path.exists(f"{ENGLISH_NORMAL}"):
-        mkdir(ENGLISH_NORMAL)
+    operational_name = Path(f"{OPERATIONAL_BASE}").joinpath(f"DE-{yyyy}{mm}{dd}-BNETZA-BNETZA") 
+    if not operational_name.exists():
+        operational_name.mkdir(exist_ok=True, parents=True)
     if not DEBUG:
         for element in data.keys():
             data[element].to_csv(
-                f"{ENGLISH_NORMAL}/{filenames[element]}.csv",
+                operational_name.joinpath(f"{filenames[element]}.csv"),
                 date_format="%Y-%m-%d %H:%M:%S",
             )
 
         with open(
-            f"{ENGLISH_NORMAL}/{OEP_NORMAL_FILENAME.format(mm=mm, dd=dd, yyyy=yyyy)}.json",
+            operational_name.joinpath(f"{OEP_NORMAL_FILENAME.format(mm=mm, dd=dd, yyyy=yyyy)}.json"),
             "w",
             encoding="utf8",
         ) as output:
@@ -465,8 +466,8 @@ def main():
         get_renamed_annotated(oep=OEP)
     )
 
-    if not path.exists(f"{DEFAULT_DIR}"):
-        mkdir(DEFAULT_DIR)
+    if not (p := Path(f"{DEFAULT_DIR}")).exists():
+        p.mkdir(parents=True, exist_ok=True)
     if DEBUG:
         station_data = station_data.head(10)
     station_data.to_csv(
