@@ -5,7 +5,7 @@ from datetime import datetime
 from os import path, mkdir
 
 FILENAME = "bnetza_charging_stations_raw_{MM}_{YYYY}.xlsx"
-DATA_DIRECTORY = "data"
+DATA_DIRECTORY = "sources/BNETZA"
 
 
 def get_raw(dd_mm_yyyy: tuple = None):
