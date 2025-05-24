@@ -35,7 +35,7 @@ COLUMN_RENAME = {
     "Bezahlsysteme": "paying_system",
     "Öffnungszeiten": "opening_times",
     "Öffnungszeiten: Wochentage": "opening_days",
-    "Öffnungszeiten: Tageszeiten": "opeing_hours",
+    "Öffnungszeiten: Tageszeiten": "opening_hours",
     "Anzahl Ladepunkte": "charger_amount",
     "Steckertypen1": "charger_type_1",
     "Nennleistung Stecker1": "charger_power_1",
