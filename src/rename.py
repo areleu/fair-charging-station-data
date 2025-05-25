@@ -5,7 +5,7 @@ from pathlib import Path
 from normalise import get_normalised_data
 from annotate import annotate
 import json
-
+from pandas import DataFrame
 DEBUG = False
 OEP = False  # The OEP format is not entirely compatible with frictionless, change to False to generate a frictionless dataset.
 
@@ -87,6 +87,8 @@ COLUMN_DATATYPE = {
     "Inbetriebnahmedatum": "date",
 }
 
+OPENING_HOURS_MAP = {"247": "24/7", "Eingeschränkt": "Limited"}
+
 
 def get_renamed_normalised(download_date: tuple = None, oep=True):
     # column_data, point_data, operator_data, location_data, _, _, _, _,
@@ -94,16 +96,18 @@ def get_renamed_normalised(download_date: tuple = None, oep=True):
         download_date
     )
 
-    column_data = data["column"].rename(columns=COLUMN_RENAME)
-    point_data = data["point"].rename(columns=COLUMN_RENAME)
-    operator_data = data["operator"].rename(columns=COLUMN_RENAME)
-    location_data = data["location"].rename(columns=COLUMN_RENAME)
-    socket_data = data["socket"].rename(columns=COLUMN_RENAME)
-    compatibility_data = data["compatibility"].rename(columns=COLUMN_RENAME)
+    column_data: DataFrame = data["column"].rename(columns=COLUMN_RENAME)
+    facility_data: DataFrame = data["facility"].rename(columns=COLUMN_RENAME)
+    point_data: DataFrame = data["point"].rename(columns=COLUMN_RENAME)
+    operator_data: DataFrame = data["operator"].rename(columns=COLUMN_RENAME)
+    location_data: DataFrame = data["location"].rename(columns=COLUMN_RENAME)
+    socket_data: DataFrame = data["socket"].rename(columns=COLUMN_RENAME)
+    compatibility_data: DataFrame = data["compatibility"].rename(columns=COLUMN_RENAME)
 
     for k, v in CONTENT_RENAME_TYPE.items():
         column_data["column_type"] = column_data["column_type"].str.replace(k, v)
 
+    facility_data["opening_times"] = facility_data["opening_times"].apply(lambda x: OPENING_HOURS_MAP.get(x,x))
     # Column resource renaming
     column_resource_fields = normalised_compiled_metadata["resources"][0]["schema"][
         "fields"
@@ -144,8 +148,43 @@ def get_renamed_normalised(download_date: tuple = None, oep=True):
         normalised_compiled_metadata["resources"][0]["format"] = "PostgreSQL"
         normalised_compiled_metadata["resources"][0].pop("encoding", None)
 
+    # Facility resource renaming
+    facility_resource_fields = normalised_compiled_metadata["resources"][1]["schema"][
+        "fields"
+    ]
+    new_fields_facility = []
+    for field in facility_resource_fields:
+        old_name = field["name"]
+        if oep:
+            field["type"] = COLUMN_DATATYPE.get(old_name, field.get("type", "string"))
+            if field["name"] == "id":
+                field.pop("constraints", None)
+        field["name"] = COLUMN_RENAME.get(old_name, old_name)
+        new_fields_facility.append(field)
+
+    assert set(f["name"] for f in new_fields_facility) == set(
+        list(facility_data.columns) + list(facility_data.index.names)
+    ), "Socket column names in output do not match"
+    normalised_compiled_metadata["resources"][1]["schema"]["fields"] = new_fields_facility
+
+    new_facility_filename = f"bnetza_charging_facilities_{dd}_{mm}_{yyyy}"
+    
+    normalised_compiled_metadata["resources"][1]["name"] = (
+        "model_draft." + new_facility_filename if oep else new_facility_filename
+    )
+    normalised_compiled_metadata["resources"][1]["path"] = f"{new_facility_filename}.csv"
+
+    if oep:
+        normalised_compiled_metadata["resources"][1]["dialect"] = {
+            "delimiter": ",",
+            "decimalSeparator": ".",
+        }
+        normalised_compiled_metadata["resources"][1]["format"] = "PostgreSQL"
+        normalised_compiled_metadata["resources"][1].pop("encoding", None)
+
+
     # Point resource renaming
-    point_resource_fields = normalised_compiled_metadata["resources"][1]["schema"][
+    point_resource_fields = normalised_compiled_metadata["resources"][2]["schema"][
         "fields"
     ]
     new_fields_point = []
@@ -161,31 +200,29 @@ def get_renamed_normalised(download_date: tuple = None, oep=True):
     assert set(f["name"] for f in new_fields_point) == set(
         list(point_data.columns) + list(point_data.index.names)
     ), "Socket column names in output do not match"
-    normalised_compiled_metadata["resources"][1]["schema"]["fields"] = new_fields_point
+    normalised_compiled_metadata["resources"][2]["schema"]["fields"] = new_fields_point
 
     new_point_filename = f"bnetza_charging_points_{dd}_{mm}_{yyyy}"
 
-    normalised_compiled_metadata["resources"][1]["schema"]["foreignKeys"][0][
+    normalised_compiled_metadata["resources"][2]["schema"]["foreignKeys"][0][
         "reference"
-    ]["resource"] = (
-        "model_draft." + new_column_filename if oep else new_column_filename
-    )
+    ]["resource"] = "model_draft." + new_column_filename if oep else new_column_filename
 
-    normalised_compiled_metadata["resources"][1]["name"] = (
+    normalised_compiled_metadata["resources"][2]["name"] = (
         "model_draft." + new_point_filename if oep else new_point_filename
     )
-    normalised_compiled_metadata["resources"][1]["path"] = f"{new_point_filename}.csv"
+    normalised_compiled_metadata["resources"][2]["path"] = f"{new_point_filename}.csv"
 
     if oep:
-        normalised_compiled_metadata["resources"][1]["dialect"] = {
+        normalised_compiled_metadata["resources"][2]["dialect"] = {
             "delimiter": ",",
             "decimalSeparator": ".",
         }
-        normalised_compiled_metadata["resources"][1]["format"] = "PostgreSQL"
-        normalised_compiled_metadata["resources"][1].pop("encoding", None)
+        normalised_compiled_metadata["resources"][2]["format"] = "PostgreSQL"
+        normalised_compiled_metadata["resources"][2].pop("encoding", None)
 
     # Operator resource renaming
-    operator_resource_fields = normalised_compiled_metadata["resources"][2]["schema"][
+    operator_resource_fields = normalised_compiled_metadata["resources"][3]["schema"][
         "fields"
     ]
     new_fields_operator = []
@@ -201,35 +238,35 @@ def get_renamed_normalised(download_date: tuple = None, oep=True):
     assert set(f["name"] for f in new_fields_operator) == set(
         list(operator_data.columns) + list(operator_data.index.names)
     ), "Operator column names in output do not match"
-    normalised_compiled_metadata["resources"][2]["schema"][
-        "fields"
-    ] = new_fields_operator
+    normalised_compiled_metadata["resources"][3]["schema"]["fields"] = (
+        new_fields_operator
+    )
 
     new_operator_filename = f"bnetza_operators_{dd}_{mm}_{yyyy}"
 
-    normalised_compiled_metadata["resources"][2]["name"] = (
+    normalised_compiled_metadata["resources"][3]["name"] = (
         "model_draft." + new_operator_filename if oep else new_operator_filename
     )
-    normalised_compiled_metadata["resources"][2][
-        "path"
-    ] = f"{new_operator_filename}.csv"
+    normalised_compiled_metadata["resources"][3]["path"] = (
+        f"{new_operator_filename}.csv"
+    )
 
     if oep:
-        normalised_compiled_metadata["resources"][2]["dialect"] = {
+        normalised_compiled_metadata["resources"][3]["dialect"] = {
             "delimiter": ",",
             "decimalSeparator": ".",
         }
-        normalised_compiled_metadata["resources"][2]["format"] = "PostgreSQL"
-        normalised_compiled_metadata["resources"][2].pop("encoding", None)
+        normalised_compiled_metadata["resources"][3]["format"] = "PostgreSQL"
+        normalised_compiled_metadata["resources"][3].pop("encoding", None)
 
-    normalised_compiled_metadata["resources"][0]["schema"]["foreignKeys"][0][
+    normalised_compiled_metadata["resources"][1]["schema"]["foreignKeys"][0][
         "reference"
     ]["resource"] = (
         "model_draft." + new_operator_filename if oep else new_operator_filename
     )
 
     # Location resource renaming
-    location_resource_fields = normalised_compiled_metadata["resources"][3]["schema"][
+    location_resource_fields = normalised_compiled_metadata["resources"][4]["schema"][
         "fields"
     ]
     new_fields_location = []
@@ -245,28 +282,28 @@ def get_renamed_normalised(download_date: tuple = None, oep=True):
     assert set(f["name"] for f in new_fields_location) == set(
         list(location_data.columns) + list(location_data.index.names)
     ), "Location column names in output do not match"
-    normalised_compiled_metadata["resources"][3]["schema"][
-        "fields"
-    ] = new_fields_location
+    normalised_compiled_metadata["resources"][4]["schema"]["fields"] = (
+        new_fields_location
+    )
 
     new_location_filename = f"bnetza_locations_{dd}_{mm}_{yyyy}"
 
-    normalised_compiled_metadata["resources"][3]["name"] = (
+    normalised_compiled_metadata["resources"][4]["name"] = (
         "model_draft." + new_location_filename if oep else new_location_filename
     )
-    normalised_compiled_metadata["resources"][3][
-        "path"
-    ] = f"{new_location_filename}.csv"
+    normalised_compiled_metadata["resources"][4]["path"] = (
+        f"{new_location_filename}.csv"
+    )
 
     if oep:
-        normalised_compiled_metadata["resources"][3]["dialect"] = {
+        normalised_compiled_metadata["resources"][4]["dialect"] = {
             "delimiter": ",",
             "decimalSeparator": ".",
         }
-        normalised_compiled_metadata["resources"][3]["format"] = "PostgreSQL"
-        normalised_compiled_metadata["resources"][3].pop("encoding", None)
+        normalised_compiled_metadata["resources"][4]["format"] = "PostgreSQL"
+        normalised_compiled_metadata["resources"][4].pop("encoding", None)
 
-    normalised_compiled_metadata["resources"][0]["schema"]["foreignKeys"][1][
+    normalised_compiled_metadata["resources"][1]["schema"]["foreignKeys"][1][
         "reference"
     ]["resource"] = (
         "model_draft." + new_location_filename if oep else new_location_filename
@@ -284,7 +321,7 @@ def get_renamed_normalised(download_date: tuple = None, oep=True):
     )
 
     # Socket resource renaming
-    socket_resource_fields = normalised_compiled_metadata["resources"][4]["schema"][
+    socket_resource_fields = normalised_compiled_metadata["resources"][5]["schema"][
         "fields"
     ]
     new_fields_socket = []
@@ -306,17 +343,17 @@ def get_renamed_normalised(download_date: tuple = None, oep=True):
     assert set(f["name"] for f in new_fields_socket) == set(
         list(socket_data.columns) + list(socket_data.index.names)
     ), "Socket column names in output do not match"
-    normalised_compiled_metadata["resources"][4]["schema"]["fields"] = new_fields_socket
+    normalised_compiled_metadata["resources"][5]["schema"]["fields"] = new_fields_socket
 
     new_socket_filename = f"bnetza_charging_sockets_{dd}_{mm}_{yyyy}"
 
-    normalised_compiled_metadata["resources"][4]["name"] = (
+    normalised_compiled_metadata["resources"][5]["name"] = (
         "model_draft." + new_socket_filename if oep else new_socket_filename
     )
-    normalised_compiled_metadata["resources"][4]["path"] = f"{new_socket_filename}.csv"
+    normalised_compiled_metadata["resources"][5]["path"] = f"{new_socket_filename}.csv"
 
     # Compatibility resource renaming
-    compatibility_resource_fields = normalised_compiled_metadata["resources"][5][
+    compatibility_resource_fields = normalised_compiled_metadata["resources"][6][
         "schema"
     ]["fields"]
     new_fields_compatibitliy = []
@@ -338,19 +375,20 @@ def get_renamed_normalised(download_date: tuple = None, oep=True):
     assert set(f["name"] for f in new_fields_compatibitliy) == set(
         list(compatibility_data.columns) + list(compatibility_data.index.names)
     ), "Compatibility column names in output do not match"
-    normalised_compiled_metadata["resources"][5]["schema"][
-        "fields"
-    ] = new_fields_compatibitliy
+    normalised_compiled_metadata["resources"][6]["schema"]["fields"] = (
+        new_fields_compatibitliy
+    )
 
     new_compat_filename = f"bnetza_charging_compatibility_{dd}_{mm}_{yyyy}"
 
-    normalised_compiled_metadata["resources"][5]["name"] = (
+    normalised_compiled_metadata["resources"][6]["name"] = (
         "model_draft." + new_compat_filename if oep else new_compat_filename
     )
-    normalised_compiled_metadata["resources"][5]["path"] = f"{new_compat_filename}.csv"
+    normalised_compiled_metadata["resources"][6]["path"] = f"{new_compat_filename}.csv"
 
     new_data = {
         "column": column_data,
+        "facility": facility_data,
         "point": point_data,
         "operator": operator_data,
         "location": location_data,
@@ -359,6 +397,7 @@ def get_renamed_normalised(download_date: tuple = None, oep=True):
     }
     new_filenames = {
         "column": new_column_filename,
+        "facility": new_facility_filename,
         "point": new_point_filename,
         "operator": new_operator_filename,
         "location": new_location_filename,
@@ -406,9 +445,9 @@ def get_renamed_annotated(download_date: tuple = None, oep=True):
         column_set = set(list(station_data.columns))
         if oep:
             column_set.add("id")
-    assert (
-        set(f["name"] for f in new_fields) == column_set
-    ), "Station column names in output do not match"
+    assert set(f["name"] for f in new_fields) == column_set, (
+        "Station column names in output do not match"
+    )
 
     station_compiled_metadata["resources"][0]["schema"]["fields"] = new_fields
     if oep:
@@ -443,7 +482,9 @@ def main():
     data, filenames, normalised_compiled_metadata, (dd, mm, yyyy) = (
         get_renamed_normalised(oep=OEP)
     )
-    operational_name = Path(f"{OPERATIONAL_BASE}").joinpath(f"DE-{yyyy}{mm}{dd}-BNETZA-BNETZA") 
+    operational_name = Path(f"{OPERATIONAL_BASE}").joinpath(
+        f"DE-{yyyy}{mm}{dd}-BNETZA-BNETZA"
+    )
     if not operational_name.exists():
         operational_name.mkdir(exist_ok=True, parents=True)
     if not DEBUG:
@@ -454,7 +495,9 @@ def main():
             )
 
         with open(
-            operational_name.joinpath(f"{OEP_NORMAL_FILENAME.format(mm=mm, dd=dd, yyyy=yyyy)}.json"),
+            operational_name.joinpath(
+                f"{OEP_NORMAL_FILENAME.format(mm=mm, dd=dd, yyyy=yyyy)}.json"
+            ),
             "w",
             encoding="utf8",
         ) as output:

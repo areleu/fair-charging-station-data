@@ -9,9 +9,9 @@ from collections import OrderedDict
 from copy import deepcopy
 import json
 from os import mkdir, path
-import numpy as np
 
 COLUMN_DATA = "bnetza_charging_columns_{dd}_{mm}_{yyyy}"
+FACILITY_DATA = "bnetza_facilities_{dd}_{mm}_{yyyy}"
 POINT_DATA = "bnetza_charging_points_{dd}_{mm}_{yyyy}"
 OPERATOR_DATA = "bnetza_operators_{dd}_{mm}_{yyyy}"
 LOCATION_DATA = "bnetza_locations_{dd}_{mm}_{yyyy}"
@@ -27,8 +27,9 @@ CONNECTION_TYPE_MAP = {
     "AC Schuko": "ac_domesticf_socket",
     "DC CHAdeMO": "dc_chademo_socket",
     "DC Fahrzeugkupplung Typ Combo 2 (CCS)": "dc_iec62196t2combo_cable",
-    "DC Tesla Fahrzeugkupplung (Typ 2)": "dc_tesla_cable"
+    "DC Tesla Fahrzeugkupplung (Typ 2)": "dc_tesla_cable",
 }
+
 
 def get_normalised_data(download_date: tuple = None):
     df, filename, (dd, mm, yyyy) = get_clean_data(download_date)
@@ -44,6 +45,8 @@ def get_normalised_data(download_date: tuple = None):
     li = "location_id"
     pi = "point_id"
     si = "socket_id"
+    fi = "facility_id"
+
     column_names = ["Steckertypen", "Leistungskapazität", "EVSE-ID", "Key"]
     point_data_1 = df.iloc[:, 22:26]
     point_data_1.columns = [column_names]
@@ -83,6 +86,7 @@ def get_normalised_data(download_date: tuple = None):
 
     point_filename = POINT_DATA.format(dd=dd, mm=mm, yyyy=yyyy)
     column_filename = COLUMN_DATA.format(dd=dd, mm=mm, yyyy=yyyy)
+    facility_filename = FACILITY_DATA.format(dd=dd, mm=mm, yyyy=yyyy)
     operator_filename = OPERATOR_DATA.format(dd=dd, mm=mm, yyyy=yyyy)
     location_filename = LOCATION_DATA.format(dd=dd, mm=mm, yyyy=yyyy)
     socket_filename = SOCKET_DATA.format(dd=dd, mm=mm, yyyy=yyyy)
@@ -94,7 +98,9 @@ def get_normalised_data(download_date: tuple = None):
         .fillna("")
         .str.split(",")
         .apply(
-            lambda lst:[CONNECTION_TYPE_MAP.get(itm.strip(), itm.strip()) for itm in lst]
+            lambda lst: [
+                CONNECTION_TYPE_MAP.get(itm.strip(), itm.strip()) for itm in lst
+            ]
         )
     )
     point_data["power_temp"] = (
@@ -103,7 +109,12 @@ def get_normalised_data(download_date: tuple = None):
         .str.split(";")
         .map(lambda x: [y.replace(",", ".").strip() for y in x])
     )
-    point_data["sockets_temp"] = point_data.apply(lambda row: ",".join(["_".join(s) for s in zip(row["types_temp"], row["power_temp"])]), axis = 1)
+    point_data["sockets_temp"] = point_data.apply(
+        lambda row: ",".join(
+            ["_".join(s) for s in zip(row["types_temp"], row["power_temp"])]
+        ),
+        axis=1,
+    )
     socket_types = [
         it
         for it in set(
@@ -145,7 +156,16 @@ def get_normalised_data(download_date: tuple = None):
     )
     compatibility_data.index.name = "id"
 
-    point_data.drop(columns=["types_temp", "power_temp", "sockets_temp", "Steckertypen", "Leistungskapazität"], inplace=True)
+    point_data.drop(
+        columns=[
+            "types_temp",
+            "power_temp",
+            "sockets_temp",
+            "Steckertypen",
+            "Leistungskapazität",
+        ],
+        inplace=True,
+    )
     socket_data.drop(columns=["name"], inplace=True)
     # Separate operators
     column_data["Betreiber"] = column_data["Betreiber"].str.strip()
@@ -172,7 +192,7 @@ def get_normalised_data(download_date: tuple = None):
         "Ort",
         "Bundesland",
         "Kreis/kreisfreie Stadt",
-        "Standortbezeichnung"
+        "Standortbezeichnung",
     ]
     numeric_location_columns = ["Postleitzahl", "Breitengrad", "Längengrad"]
     all_locations = location_columns + numeric_location_columns
@@ -198,6 +218,55 @@ def get_normalised_data(download_date: tuple = None):
     new_columns.index.name = "id"
     column_data.insert(loc=1, column=li, value=new_columns["id_y"])
     column_data.drop(columns=["identifier"], inplace=True)
+
+    opening_times_map = {
+        "Keine Angabe": None,
+        "247": "247",
+        "Eingeschränkt": "Eingeschränkt",
+    }
+    column_data["Öffnungszeiten"] = column_data["Öffnungszeiten"].apply(
+        lambda x: opening_times_map.get(x, x)
+    )
+    facility_columns = [
+        "operator_id",
+        "location_id",
+        "Öffnungszeiten",
+        "Öffnungszeiten: Wochentage",
+        "Öffnungszeiten: Tageszeiten",
+    ]
+    facility_data_pre = (
+        column_data[facility_columns]
+        .reset_index()
+        .drop(columns=["id"])
+        .drop_duplicates()
+    )
+    dup_filter = facility_data_pre.duplicated(
+        subset=["operator_id", "location_id"], keep=False
+    )
+    duplicated = (
+        facility_data_pre[dup_filter]
+        .groupby(["operator_id", "location_id"])
+        .agg("first")
+    ).reset_index()
+    uniques = facility_data_pre[~dup_filter]
+
+    facility_data = pd.concat([uniques, duplicated])
+    facility_data["id"] = facility_data.apply(
+        lambda row: str(row["operator_id"]).zfill(6) + str(row["location_id"]).zfill(6),
+        axis=1,
+    )
+    column_data = column_data.join(
+        facility_data[["operator_id", "location_id", "id"]].set_index(
+            ["operator_id", "location_id"]
+        ),
+        on=["operator_id", "location_id"],
+        how="left",
+    ).rename(columns={"id":"facility_id"})
+
+    facility_data = facility_data.set_index("id")
+    column_data = column_data.drop(columns=facility_columns)
+    column_data = column_data[[column_data.columns[-1]] + list(column_data.columns[:-1])]
+
     location_data.drop(columns=["identifier"], inplace=True)
 
     # Annotate
@@ -216,8 +285,7 @@ def get_normalised_data(download_date: tuple = None):
         for f in annotations["resources"][0]["schema"]["fields"]
         if f["name"] in column_fields.keys()
     }
-    annotation_fields[oi] = {"description": "Identifier of the operator"}
-    annotation_fields[li] = {"description": "Identifier of the location"}
+    annotation_fields[fi] = {"description": "Identifier of the facility"}
 
     annotation_fields["id"] = {"description": "Unique identifier"}
     for k, v in annotation_fields.items():
@@ -237,6 +305,45 @@ def get_normalised_data(download_date: tuple = None):
             "primaryKey": ["id"],
             "foreignKeys": [
                 {
+                    "fields": [fi],
+                    "reference": {"resource": operator_filename, "fields": ["id"]},
+                },
+            ],
+        },
+    }
+
+    # facility data
+    # get  file schema
+    facility_schema = fl.Schema.describe(facility_data)
+    facility_dict = facility_schema.to_dict()
+
+    facility_fields = OrderedDict({f["name"]: f for f in facility_dict["fields"]})
+    annotation_fields = {
+        f["name"]: f
+        for f in annotations["resources"][0]["schema"]["fields"]
+        if f["name"] in facility_fields.keys()
+    }
+    annotation_fields[oi] = {"description": "Identifier of the operator"}
+    annotation_fields[li] = {"description": "Identifier of the location"}
+
+    annotation_fields["id"] = {"description": "Unique identifier"}
+    for k, v in annotation_fields.items():
+        facility_fields[k].update(v)
+    if "id" in facility_fields:
+        if "constraints" in facility_fields["id"]:
+            facility_fields["id"].pop("constraints")
+    facility_fields_list = [v for v in facility_fields.values()]
+    facility_resource = {
+        "profile": "tabular-data-resource",
+        "name": facility_filename,
+        "path": f"{facility_filename}.csv",
+        "format": "csv",
+        "encoding": "utf-8",
+        "schema": {
+            "fields": facility_fields_list,
+            "primaryKey": ["id"],
+            "foreignKeys": [
+                {
                     "fields": [oi],
                     "reference": {"resource": operator_filename, "fields": ["id"]},
                 },
@@ -247,6 +354,7 @@ def get_normalised_data(download_date: tuple = None):
             ],
         },
     }
+
 
     # socket data
     # get file schema
@@ -362,7 +470,9 @@ def get_normalised_data(download_date: tuple = None):
         "description": "Connection pattern of the connector"
     }
     annotation_fields["connector"] = {"description": "Type of coupling"}
-    annotation_fields["power"] = {"description": "Max power supported by the connector."}
+    annotation_fields["power"] = {
+        "description": "Max power supported by the connector."
+    }
     # annotation_fields["maker"] = {"description": "Developer of the socket type"}
     # annotation_fields["mode"] = {"description": "Charging mode of the connector"}
     for k, v in annotation_fields.items():
@@ -434,6 +544,7 @@ def get_normalised_data(download_date: tuple = None):
     annotations_new["publicationDate"] = f"{yyyy}-{mm}-{dd}"
     annotations_new["resources"] = [
         column_resource,
+        facility_resource,
         point_resource,
         operator_resource,
         location_resource,
@@ -443,6 +554,7 @@ def get_normalised_data(download_date: tuple = None):
 
     data = {
         "column": column_data,
+        "facility": facility_data,
         "point": point_data,
         "operator": operator_data,
         "location": location_data,
@@ -451,6 +563,7 @@ def get_normalised_data(download_date: tuple = None):
     }
     filenames = {
         "column": column_filename,
+        "facility": facility_filename,
         "point": point_filename,
         "operator": operator_filename,
         "location": location_filename,
@@ -461,7 +574,6 @@ def get_normalised_data(download_date: tuple = None):
 
 
 def main():
-
     data, filenames, annotations_new, (dd, mm, yyyy) = get_normalised_data()
     # export
 
