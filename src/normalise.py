@@ -9,12 +9,15 @@ from collections import OrderedDict
 from copy import deepcopy
 import json
 from os import mkdir, path
+from zlib import crc32
 
 COLUMN_DATA = "bnetza_charging_columns_{dd}_{mm}_{yyyy}"
 FACILITY_DATA = "bnetza_facilities_{dd}_{mm}_{yyyy}"
 POINT_DATA = "bnetza_charging_points_{dd}_{mm}_{yyyy}"
 OPERATOR_DATA = "bnetza_operators_{dd}_{mm}_{yyyy}"
-LOCATION_DATA = "bnetza_locations_{dd}_{mm}_{yyyy}"
+GEOLOCATION_DATA = "bnetza_locations_{dd}_{mm}_{yyyy}"
+ADDRESS_DATA = "bnetza_addresses_{dd}_{mm}_{yyyy}"
+COORDINATE_DATA = "bnetza_coordinates_{dd}_{mm}_{yyyy}"
 NORMALIZED_FILENAME = "bnetza_charging_stations_normalised_{dd}_{mm}_{yyyy}"
 COMPATIBILITY_DATA = "bnetza_compatibility_{dd}_{mm}_{yyyy}"
 SOCKET_DATA = "bnetza_charging_sockets_{dd}_{mm}_{yyyy}"
@@ -42,7 +45,7 @@ def get_normalised_data(download_date: tuple = None):
     # socket data
     ci = "column_id"
     oi = "operator_id"
-    li = "location_id"
+    gi = "geolocation_id"
     pi = "point_id"
     si = "socket_id"
     fi = "facility_id"
@@ -88,7 +91,9 @@ def get_normalised_data(download_date: tuple = None):
     column_filename = COLUMN_DATA.format(dd=dd, mm=mm, yyyy=yyyy)
     facility_filename = FACILITY_DATA.format(dd=dd, mm=mm, yyyy=yyyy)
     operator_filename = OPERATOR_DATA.format(dd=dd, mm=mm, yyyy=yyyy)
-    location_filename = LOCATION_DATA.format(dd=dd, mm=mm, yyyy=yyyy)
+    geolocation_filename = GEOLOCATION_DATA.format(dd=dd, mm=mm, yyyy=yyyy)
+    address_filename = ADDRESS_DATA.format(dd=dd, mm=mm, yyyy=yyyy)
+    coordinate_filename = COORDINATE_DATA.format(dd=dd, mm=mm, yyyy=yyyy)
     socket_filename = SOCKET_DATA.format(dd=dd, mm=mm, yyyy=yyyy)
     compatibility_filename = COMPATIBILITY_DATA.format(dd=dd, mm=mm, yyyy=yyyy)
 
@@ -193,30 +198,32 @@ def get_normalised_data(download_date: tuple = None):
         "Bundesland",
         "Kreis/kreisfreie Stadt",
         "Standortbezeichnung",
+        "Postleitzahl",
     ]
-    numeric_location_columns = ["Postleitzahl", "Breitengrad", "Längengrad"]
+    numeric_location_columns = ["Breitengrad", "Längengrad"]
     all_locations = location_columns + numeric_location_columns
 
+    column_data["Postleitzahl"] = column_data["Postleitzahl"].astype(str)
     column_data[location_columns] = column_data[location_columns].apply(
         lambda x: x.str.strip()
     )
     column_data["identifier"] = column_data[all_locations].astype(str).sum(axis=1)
 
-    location_data = column_data[all_locations + ["identifier"]]
-    location_data.drop_duplicates(inplace=True)
-    location_data = location_data.reset_index(drop=True)
-    location_data.index.name = "id"
+    geolocation_data = column_data[all_locations + ["identifier"]]
+    geolocation_data.drop_duplicates(inplace=True)
+    geolocation_data = geolocation_data.reset_index(drop=True)
+    geolocation_data.index.name = "id"
     column_data.drop(columns=all_locations, inplace=True)
     new_columns = pd.merge(
         column_data.reset_index(),
-        location_data.reset_index()[["identifier", "id"]],
+        geolocation_data.reset_index()[["identifier", "id"]],
         left_on="identifier",
         right_on="identifier",
         how="left",
         sort=False,
     ).set_index("id_x")
     new_columns.index.name = "id"
-    column_data.insert(loc=1, column=li, value=new_columns["id_y"])
+    column_data.insert(loc=1, column=gi, value=new_columns["id_y"])
     column_data.drop(columns=["identifier"], inplace=True)
 
     opening_times_map = {
@@ -229,7 +236,7 @@ def get_normalised_data(download_date: tuple = None):
     )
     facility_columns = [
         "operator_id",
-        "location_id",
+        "geolocation_id",
         "Öffnungszeiten",
         "Öffnungszeiten: Wochentage",
         "Öffnungszeiten: Tageszeiten",
@@ -241,33 +248,35 @@ def get_normalised_data(download_date: tuple = None):
         .drop_duplicates()
     )
     dup_filter = facility_data_pre.duplicated(
-        subset=["operator_id", "location_id"], keep=False
+        subset=["operator_id", "geolocation_id"], keep=False
     )
     duplicated = (
         facility_data_pre[dup_filter]
-        .groupby(["operator_id", "location_id"])
+        .groupby(["operator_id", "geolocation_id"])
         .agg("first")
     ).reset_index()
     uniques = facility_data_pre[~dup_filter]
 
     facility_data = pd.concat([uniques, duplicated])
     facility_data["id"] = facility_data.apply(
-        lambda row: str(row["operator_id"]).zfill(6) + str(row["location_id"]).zfill(6),
+        lambda row: str(row["operator_id"]).zfill(6) + str(row["geolocation_id"]).zfill(6),
         axis=1,
     )
     column_data = column_data.join(
-        facility_data[["operator_id", "location_id", "id"]].set_index(
-            ["operator_id", "location_id"]
+        facility_data[["operator_id", "geolocation_id", "id"]].set_index(
+            ["operator_id", "geolocation_id"]
         ),
-        on=["operator_id", "location_id"],
+        on=["operator_id", "geolocation_id"],
         how="left",
-    ).rename(columns={"id":"facility_id"})
+    ).rename(columns={"id": "facility_id"})
 
     facility_data = facility_data.set_index("id")
     column_data = column_data.drop(columns=facility_columns)
-    column_data = column_data[[column_data.columns[-1]] + list(column_data.columns[:-1])]
+    column_data = column_data[
+        [column_data.columns[-1]] + list(column_data.columns[:-1])
+    ]
 
-    location_data.drop(columns=["identifier"], inplace=True)
+    geolocation_data.drop(columns=["identifier"], inplace=True)
 
     # Annotate
     # get annotated fields
@@ -324,7 +333,7 @@ def get_normalised_data(download_date: tuple = None):
         if f["name"] in facility_fields.keys()
     }
     annotation_fields[oi] = {"description": "Identifier of the operator"}
-    annotation_fields[li] = {"description": "Identifier of the location"}
+    annotation_fields[gi] = {"description": "Identifier of the location"}
 
     annotation_fields["id"] = {"description": "Unique identifier"}
     for k, v in annotation_fields.items():
@@ -348,13 +357,12 @@ def get_normalised_data(download_date: tuple = None):
                     "reference": {"resource": operator_filename, "fields": ["id"]},
                 },
                 {
-                    "fields": [li],
-                    "reference": {"resource": location_filename, "fields": ["id"]},
+                    "fields": [gi],
+                    "reference": {"resource": geolocation_filename, "fields": ["id"]},
                 },
             ],
         },
     }
-
 
     # socket data
     # get file schema
@@ -445,10 +453,10 @@ def get_normalised_data(download_date: tuple = None):
         if "constraints" in location_fields["id"]:
             location_fields["id"].pop("constraints")
     location_fields_list = [v for v in location_fields.values()]
-    location_resource = {
+    geolocation_resource = {
         "profile": "tabular-data-resource",
-        "name": location_filename,
-        "path": f"{location_filename}.csv",
+        "name": geolocation_filename,
+        "path": f"{geolocation_filename}.csv",
         "format": "csv",
         "encoding": "utf-8",
         "schema": {"fields": location_fields_list, "primaryKey": ["id"]},
@@ -547,7 +555,7 @@ def get_normalised_data(download_date: tuple = None):
         facility_resource,
         point_resource,
         operator_resource,
-        location_resource,
+        geolocation_resource,
         socket_resource,
         compatibility_resource,
     ]
@@ -557,7 +565,7 @@ def get_normalised_data(download_date: tuple = None):
         "facility": facility_data,
         "point": point_data,
         "operator": operator_data,
-        "location": location_data,
+        "geolocation": geolocation_data,
         "socket": socket_data,
         "compatibility": compatibility_data,
     }
@@ -566,7 +574,7 @@ def get_normalised_data(download_date: tuple = None):
         "facility": facility_filename,
         "point": point_filename,
         "operator": operator_filename,
-        "location": location_filename,
+        "geolocation": geolocation_filename,
         "socket": socket_filename,
         "compatibility": compatibility_filename,
     }
