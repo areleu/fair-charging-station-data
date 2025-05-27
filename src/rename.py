@@ -163,9 +163,11 @@ def process_all_resources(data, normalised_compiled_metadata, oep, dd, mm, yyyy)
         ("facility", f"bnetza_charging_facilities_{dd}_{mm}_{yyyy}"),
         ("point", f"bnetza_charging_points_{dd}_{mm}_{yyyy}"),
         ("operator", f"bnetza_operators_{dd}_{mm}_{yyyy}"),
-        ("location", f"bnetza_locations_{dd}_{mm}_{yyyy}"),
+        ("geolocation", f"bnetza_geolocations_{dd}_{mm}_{yyyy}"),
         ("socket", f"bnetza_charging_sockets_{dd}_{mm}_{yyyy}"),
         ("compatibility", f"bnetza_charging_compatibility_{dd}_{mm}_{yyyy}"),
+        ("address", f"bnetza_addresses_{dd}_{mm}_{yyyy}"),
+        ("coordinate", f"bnetza_coordinates_{dd}_{mm}_{yyyy}"),
     ]
 
     for i, (key, filename) in enumerate(resource_filenames):

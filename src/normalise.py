@@ -16,7 +16,7 @@ COLUMN_DATA = "bnetza_charging_columns_{dd}_{mm}_{yyyy}"
 FACILITY_DATA = "bnetza_facilities_{dd}_{mm}_{yyyy}"
 POINT_DATA = "bnetza_charging_points_{dd}_{mm}_{yyyy}"
 OPERATOR_DATA = "bnetza_operators_{dd}_{mm}_{yyyy}"
-GEOLOCATION_DATA = "bnetza_locations_{dd}_{mm}_{yyyy}"
+GEOLOCATION_DATA = "bnetza_geolocations_{dd}_{mm}_{yyyy}"
 ADDRESS_DATA = "bnetza_addresses_{dd}_{mm}_{yyyy}"
 COORDINATE_DATA = "bnetza_coordinates_{dd}_{mm}_{yyyy}"
 NORMALIZED_FILENAME = "bnetza_charging_stations_normalised_{dd}_{mm}_{yyyy}"
@@ -33,6 +33,76 @@ CONNECTION_TYPE_MAP = {
     "DC Fahrzeugkupplung Typ Combo 2 (CCS)": "dc_iec62196t2combo_cable",
     "DC Tesla Fahrzeugkupplung (Typ 2)": "dc_tesla_cable",
 }
+
+
+def describe_and_annotate(
+    data, annotations, resource_name, primary_key, foreign_keys=None
+):
+    """
+    Describe the schema of the data, annotate it, and return the resource dictionary.
+    """
+    schema = fl.Schema.describe(data)
+    schema_dict = schema.to_dict()
+
+    fields = OrderedDict({f["name"]: f for f in schema_dict["fields"]})
+    annotation_fields = {
+        f["name"]: f
+        for f in annotations["resources"][0]["schema"]["fields"]
+        if f["name"] in fields.keys()
+    }
+
+    # Add common annotations
+    annotation_fields["id"] = {"description": "Unique identifier"}
+    for k, v in annotation_fields.items():
+        fields[k].update(v)
+
+    # Remove constraints from "id" if present
+    if "id" in fields and "constraints" in fields["id"]:
+        fields["id"].pop("constraints")
+
+    fields_list = [v for v in fields.values()]
+    resource = {
+        "profile": "tabular-data-resource",
+        "name": resource_name,
+        "path": f"{resource_name}.csv",
+        "format": "csv",
+        "encoding": "utf-8",
+        "schema": {
+            "fields": fields_list,
+            "primaryKey": [primary_key],
+        },
+    }
+
+    if foreign_keys:
+        resource["schema"]["foreignKeys"] = foreign_keys
+
+    return resource
+
+
+def create_foreign_key(fields, reference_resource, reference_fields):
+    """
+    Create a foreign key dictionary.
+    """
+    return {
+        "fields": fields,
+        "reference": {"resource": reference_resource, "fields": reference_fields},
+    }
+
+
+def process_resources(data_dict, annotations, filenames, foreign_key_map):
+    """
+    Process all resources by describing, annotating, and creating resource dictionaries.
+    """
+    resources = []
+    for key, data in data_dict.items():
+        resource_name = filenames[key]
+        primary_key = "id"
+        foreign_keys = foreign_key_map.get(key, None)
+        resource = describe_and_annotate(
+            data, annotations, resource_name, primary_key, foreign_keys
+        )
+        resources.append(resource)
+    return resources
 
 
 def get_normalised_data(download_date: tuple = None):
@@ -346,366 +416,8 @@ def get_normalised_data(download_date: tuple = None):
     with open(INPUT_METADATA_FILE, "r", encoding="utf-8") as f:
         annotations = yaml.safe_load(f)
 
-    # column data
-    # get  file schema
-    column_schema = fl.Schema.describe(column_data)
-    column_dict = column_schema.to_dict()
-
-    column_fields = OrderedDict({f["name"]: f for f in column_dict["fields"]})
-    annotation_fields = {
-        f["name"]: f
-        for f in annotations["resources"][0]["schema"]["fields"]
-        if f["name"] in column_fields.keys()
-    }
-    annotation_fields[fi] = {"description": "Identifier of the facility"}
-
-    annotation_fields["id"] = {"description": "Unique identifier"}
-    for k, v in annotation_fields.items():
-        column_fields[k].update(v)
-    if "id" in column_fields:
-        if "constraints" in column_fields["id"]:
-            column_fields["id"].pop("constraints")
-    column_fields_list = [v for v in column_fields.values()]
-    column_resource = {
-        "profile": "tabular-data-resource",
-        "name": column_filename,
-        "path": f"{column_filename}.csv",
-        "format": "csv",
-        "encoding": "utf-8",
-        "schema": {
-            "fields": column_fields_list,
-            "primaryKey": ["id"],
-            "foreignKeys": [
-                {
-                    "fields": [fi],
-                    "reference": {"resource": operator_filename, "fields": ["id"]},
-                },
-                {
-                    "fields": [gi],
-                    "reference": {"resource": geolocation_filename, "fields": ["id"]},
-                },
-            ],
-        },
-    }
-
-    # facility data
-    # get  file schema
-    facility_schema = fl.Schema.describe(facility_data)
-    facility_dict = facility_schema.to_dict()
-
-    facility_fields = OrderedDict({f["name"]: f for f in facility_dict["fields"]})
-    annotation_fields = {
-        f["name"]: f
-        for f in annotations["resources"][0]["schema"]["fields"]
-        if f["name"] in facility_fields.keys()
-    }
-    annotation_fields[oi] = {"description": "Identifier of the operator"}
-    annotation_fields[gi] = {"description": "Identifier of the location"}
-
-    annotation_fields["id"] = {"description": "Unique identifier"}
-    for k, v in annotation_fields.items():
-        facility_fields[k].update(v)
-    if "id" in facility_fields:
-        if "constraints" in facility_fields["id"]:
-            facility_fields["id"].pop("constraints")
-    facility_fields_list = [v for v in facility_fields.values()]
-    facility_resource = {
-        "profile": "tabular-data-resource",
-        "name": facility_filename,
-        "path": f"{facility_filename}.csv",
-        "format": "csv",
-        "encoding": "utf-8",
-        "schema": {
-            "fields": facility_fields_list,
-            "primaryKey": ["id"],
-            "foreignKeys": [
-                {
-                    "fields": [oi],
-                    "reference": {"resource": operator_filename, "fields": ["id"]},
-                },
-                {
-                    "fields": [gi],
-                    "reference": {"resource": geolocation_filename, "fields": ["id"]},
-                },
-            ],
-        },
-    }
-
-    # socket data
-    # get file schema
-    point_schema = fl.Schema.describe(point_data)
-    point_dict = point_schema.to_dict()
-
-    point_fields = OrderedDict({f["name"]: f for f in point_dict["fields"]})
-
-    reference_fields = {
-        "P1 [kW]": "Leistungskapazität",
-        "Public Key1": "Key",
-    }
-    # "Steckertypen1": "Steckertypen",
-    annotation_fields = {
-        f["name"]: f
-        for f in annotations["resources"][0]["schema"]["fields"]
-        if f["name"] in reference_fields.keys()
-    }
-    annotation_fields["id"] = {"description": "Unique identifier"}
-    annotation_fields["column_id"] = {"description": "Identifier of column"}
-    for k, v in annotation_fields.items():
-        point_fields[reference_fields.get(k, k)].update(v)
-        point_fields[reference_fields.get(k, k)]["name"] = reference_fields.get(k, k)
-        point_fields[reference_fields.get(k, k)]["description"] = point_fields[
-            reference_fields.get(k, k)
-        ]["description"].replace(" first", "")
-    if "id" in point_fields:
-        if "constraints" in point_fields["id"]:
-            point_fields["id"].pop("constraints")
-
-    point_fields_list = [v for v in point_fields.values()]
-    point_resource = {
-        "profile": "tabular-data-resource",
-        "name": point_filename,
-        "path": f"{point_filename}.csv",
-        "format": "csv",
-        "encoding": "utf-8",
-        "schema": {
-            "fields": point_fields_list,
-            "primaryKey": ["id"],
-            "foreignKeys": [
-                {
-                    "fields": [ci],
-                    "reference": {"resource": column_filename, "fields": ["id"]},
-                }
-            ],
-        },
-    }
-    operator_schema = fl.Schema.describe(operator_data)
-    operator_dict = operator_schema.to_dict()
-
-    operator_fields = OrderedDict({f["name"]: f for f in operator_dict["fields"]})
-
-    annotation_fields = {
-        f["name"]: f
-        for f in annotations["resources"][0]["schema"]["fields"]
-        if f["name"] in operator_fields.keys()
-    }
-    annotation_fields["id"] = {"description": "Unique identifier"}
-    for k, v in annotation_fields.items():
-        operator_fields[k].update(v)
-    if "id" in operator_fields:
-        if "constraints" in operator_fields["id"]:
-            operator_fields["id"].pop("constraints")
-    operator_fields_list = [v for v in operator_fields.values()]
-    operator_resource = {
-        "profile": "tabular-data-resource",
-        "name": operator_filename,
-        "path": f"{operator_filename}.csv",
-        "format": "csv",
-        "encoding": "utf-8",
-        "schema": {
-            "fields": operator_fields_list,
-            "primaryKey": ["id"],
-        },
-    }
-
-    location_schema = fl.Schema.describe(geolocation_data)
-    location_dict = location_schema.to_dict()
-
-    location_fields = OrderedDict({f["name"]: f for f in location_dict["fields"]})
-
-    annotation_fields = {
-        f["name"]: f
-        for f in annotations["resources"][0]["schema"]["fields"]
-        if f["name"] in location_fields.keys()
-    }
-    annotation_fields["id"] = {"description": "Unique identifier"}
-    for k, v in annotation_fields.items():
-        location_fields[k].update(v)
-    if "id" in location_fields:
-        if "constraints" in location_fields["id"]:
-            location_fields["id"].pop("constraints")
-    location_fields_list = [v for v in location_fields.values()]
-    geolocation_resource = {
-        "profile": "tabular-data-resource",
-        "name": geolocation_filename,
-        "path": f"{geolocation_filename}.csv",
-        "format": "csv",
-        "encoding": "utf-8",
-        "schema": {
-            "fields": location_fields_list,
-            "primaryKey": ["id"],
-            "foreignKeys": [
-                {
-                    "fields": [ai],
-                    "reference": {"resource": address_filename, "fields": ["id"]},
-                },
-                {
-                    "fields": [coi],
-                    "reference": {"resource": coordinate_filename, "fields": ["id"]},
-                },
-            ],
-        },
-    }
-    # socket data
-    socket_schema = fl.Schema.describe(socket_data)
-    socket_dict = socket_schema.to_dict()
-
-    socket_fields = OrderedDict({f["name"]: f for f in socket_dict["fields"]})
-
-    annotation_fields = {
-        f["name"]: f
-        for f in annotations["resources"][0]["schema"]["fields"]
-        if f["name"] in socket_fields.keys()
-    }
-    annotation_fields["id"] = {"description": "Unique identifier"}
-    annotation_fields["current"] = {"description": "Current mode of the socket"}
-    annotation_fields["pattern"] = {
-        "description": "Connection pattern of the connector"
-    }
-    annotation_fields["connector"] = {"description": "Type of coupling"}
-    annotation_fields["power"] = {
-        "description": "Max power supported by the connector."
-    }
-    # annotation_fields["maker"] = {"description": "Developer of the socket type"}
-    # annotation_fields["mode"] = {"description": "Charging mode of the connector"}
-    for k, v in annotation_fields.items():
-        socket_fields[k].update(v)
-    if "id" in socket_fields:
-        if "constraints" in socket_fields["id"]:
-            socket_fields["id"].pop("constraints")
-    socket_field_list = [v for v in socket_fields.values()]
-    socket_resource = {
-        "profile": "tabular-data-resource",
-        "name": socket_filename,
-        "path": f"{socket_filename}.csv",
-        "format": "csv",
-        "encoding": "utf-8",
-        "schema": {"fields": socket_field_list, "primaryKey": ["id"]},
-    }
-
-    # compatibility data
-    # get  file schema
-    compatibility_schema = fl.Schema.describe(compatibility_data)
-    compatibility_dict = compatibility_schema.to_dict()
-
-    compatibility_fields = OrderedDict(
-        {f["name"]: f for f in compatibility_dict["fields"]}
-    )
-    annotation_fields = {
-        f["name"]: f
-        for f in annotations["resources"][0]["schema"]["fields"]
-        if f["name"] in compatibility_fields.keys()
-    }
-    annotation_fields[pi] = {"description": "Identifier of the charging point"}
-    annotation_fields[si] = {"description": "Identifier of the compatible sockets."}
-
-    annotation_fields["id"] = {"description": "Unique identifier"}
-    for k, v in annotation_fields.items():
-        compatibility_fields[k].update(v)
-    if "id" in compatibility_fields:
-        if "constraints" in compatibility_fields["id"]:
-            compatibility_fields["id"].pop("constraints")
-    compatibility_fields_list = [v for v in compatibility_fields.values()]
-    compatibility_resource = {
-        "profile": "tabular-data-resource",
-        "name": compatibility_filename,
-        "path": f"{compatibility_filename}.csv",
-        "format": "csv",
-        "encoding": "utf-8",
-        "schema": {
-            "fields": compatibility_fields_list,
-            "primaryKey": ["id"],
-            "foreignKeys": [
-                {
-                    "fields": [pi],
-                    "reference": {"resource": point_filename, "fields": ["id"]},
-                },
-                {
-                    "fields": [si],
-                    "reference": {"resource": socket_filename, "fields": ["id"]},
-                },
-            ],
-        },
-    }
-    # address data
-    address_schema = fl.Schema.describe(address_data)
-    address_dict = address_schema.to_dict()
-
-    address_fields = OrderedDict({f["name"]: f for f in address_dict["fields"]})
-
-    annotation_fields = {
-        f["name"]: f
-        for f in annotations["resources"][0]["schema"]["fields"]
-        if f["name"] in address_fields.keys()
-    }
-    annotation_fields["id"] = {"description": "Unique identifier"}
-    for k, v in annotation_fields.items():
-        address_fields[k].update(v)
-    if "id" in address_fields:
-        if "constraints" in address_fields["id"]:
-            address_fields["id"].pop("constraints")
-    address_fields_list = [v for v in address_fields.values()]
-    address_resource = {
-        "profile": "tabular-data-resource",
-        "name": address_filename,
-        "path": f"{address_filename}.csv",
-        "format": "csv",
-        "encoding": "utf-8",
-        "schema": {
-            "fields": address_fields_list,
-            "primaryKey": ["id"],
-        },
-    }
-
-    # coord data
-    coordinate_schema = fl.Schema.describe(coordinate_data)
-    coordinate_dict = coordinate_schema.to_dict()
-
-    coordinate_fields = OrderedDict({f["name"]: f for f in coordinate_dict["fields"]})
-
-    annotation_fields = {
-        f["name"]: f
-        for f in annotations["resources"][0]["schema"]["fields"]
-        if f["name"] in coordinate_fields.keys()
-    }
-    annotation_fields["id"] = {"description": "Unique identifier"}
-    for k, v in annotation_fields.items():
-        coordinate_fields[k].update(v)
-    if "id" in coordinate_fields:
-        if "constraints" in coordinate_fields["id"]:
-            coordinate_fields["id"].pop("constraints")
-    coordinate_fields_list = [v for v in coordinate_fields.values()]
-    coordinate_resource = {
-        "profile": "tabular-data-resource",
-        "name": coordinate_filename,
-        "path": f"{coordinate_filename}.csv",
-        "format": "csv",
-        "encoding": "utf-8",
-        "schema": {
-            "fields": coordinate_fields_list,
-            "primaryKey": ["id"],
-        },
-    }
-
-    annotations_new = deepcopy(annotations)
-    annotations_new["name"] = f"{NORMALIZED_FILENAME.format(mm=mm, dd=dd, yyyy=yyyy)}"
-    annotations_new["title"] = "FAIR Charging Station data (Normalised)"
-    annotations_new["description"] = (
-        "Normalised dataset based on the BNetzA charging station data."
-    )
-    annotations_new["publicationDate"] = f"{yyyy}-{mm}-{dd}"
-    annotations_new["resources"] = [
-        column_resource,
-        facility_resource,
-        point_resource,
-        operator_resource,
-        geolocation_resource,
-        socket_resource,
-        compatibility_resource,
-        address_resource,
-        coordinate_resource,
-    ]
-
-    data = {
+    # Define data and filenames
+    data_dict = {
         "column": column_data,
         "facility": facility_data,
         "point": point_data,
@@ -727,7 +439,44 @@ def get_normalised_data(download_date: tuple = None):
         "address": address_filename,
         "coordinate": coordinate_filename,
     }
-    return data, filenames, annotations_new, (dd, mm, yyyy)
+
+    # Define foreign key mappings
+    foreign_key_map = {
+        "column": [
+            create_foreign_key([fi], operator_filename, ["id"]),
+            create_foreign_key([gi], geolocation_filename, ["id"]),
+        ],
+        "facility": [
+            create_foreign_key([oi], operator_filename, ["id"]),
+            create_foreign_key([gi], geolocation_filename, ["id"]),
+        ],
+        "point": [
+            create_foreign_key([ci], column_filename, ["id"]),
+        ],
+        "geolocation": [
+            create_foreign_key([ai], address_filename, ["id"]),
+            create_foreign_key([coi], coordinate_filename, ["id"]),
+        ],
+        "compatibility": [
+            create_foreign_key([pi], point_filename, ["id"]),
+            create_foreign_key([si], socket_filename, ["id"]),
+        ],
+    }
+
+    # Process resources
+    resources = process_resources(data_dict, annotations, filenames, foreign_key_map)
+
+    # Update annotations
+    annotations_new = deepcopy(annotations)
+    annotations_new["name"] = f"{NORMALIZED_FILENAME.format(mm=mm, dd=dd, yyyy=yyyy)}"
+    annotations_new["title"] = "FAIR Charging Station data (Normalised)"
+    annotations_new["description"] = (
+        "Normalised dataset based on the BNetzA charging station data."
+    )
+    annotations_new["publicationDate"] = f"{yyyy}-{mm}-{dd}"
+    annotations_new["resources"] = resources
+
+    return data_dict, filenames, annotations_new, (dd, mm, yyyy)
 
 
 def main():
