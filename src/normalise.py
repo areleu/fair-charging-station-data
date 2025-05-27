@@ -10,6 +10,7 @@ from copy import deepcopy
 import json
 from os import mkdir, path
 from zlib import crc32
+import numpy as np
 
 COLUMN_DATA = "bnetza_charging_columns_{dd}_{mm}_{yyyy}"
 FACILITY_DATA = "bnetza_facilities_{dd}_{mm}_{yyyy}"
@@ -49,6 +50,8 @@ def get_normalised_data(download_date: tuple = None):
     pi = "point_id"
     si = "socket_id"
     fi = "facility_id"
+    ai = "address_id"
+    coi = "coordinate_id"
 
     column_names = ["Steckertypen", "Leistungskapazität", "EVSE-ID", "Key"]
     point_data_1 = df.iloc[:, 22:26]
@@ -190,7 +193,7 @@ def get_normalised_data(download_date: tuple = None):
     column_data.drop(columns=["Betreiber"], inplace=True)
 
     # Separate locations
-    location_columns = [
+    address_columns = [
         "Straße",
         "Hausnummer",
         "Adresszusatz",
@@ -200,31 +203,44 @@ def get_normalised_data(download_date: tuple = None):
         "Standortbezeichnung",
         "Postleitzahl",
     ]
-    numeric_location_columns = ["Breitengrad", "Längengrad"]
-    all_locations = location_columns + numeric_location_columns
+    coordinate_columns = ["Breitengrad", "Längengrad"]
+    all_locations = address_columns + coordinate_columns
 
     column_data["Postleitzahl"] = column_data["Postleitzahl"].astype(str)
-    column_data[location_columns] = column_data[location_columns].apply(
+    column_data["Hausnummer"] = column_data["Hausnummer"].astype(str)
+    column_data[address_columns] = column_data[address_columns].apply(
         lambda x: x.str.strip()
     )
-    column_data["identifier"] = column_data[all_locations].astype(str).sum(axis=1)
 
-    geolocation_data = column_data[all_locations + ["identifier"]]
-    geolocation_data.drop_duplicates(inplace=True)
-    geolocation_data = geolocation_data.reset_index(drop=True)
-    geolocation_data.index.name = "id"
-    column_data.drop(columns=all_locations, inplace=True)
-    new_columns = pd.merge(
-        column_data.reset_index(),
-        geolocation_data.reset_index()[["identifier", "id"]],
-        left_on="identifier",
-        right_on="identifier",
-        how="left",
-        sort=False,
-    ).set_index("id_x")
-    new_columns.index.name = "id"
-    column_data.insert(loc=1, column=gi, value=new_columns["id_y"])
-    column_data.drop(columns=["identifier"], inplace=True)
+    column_data[ai] = column_data[address_columns].apply(
+        lambda x: str(
+            crc32(
+                "".join(
+                    [str(y).replace("nan", "").replace("None", "") for y in x]
+                ).encode("utf8")
+            )
+        ),
+        axis=1,
+    )
+    column_data[coi] = column_data[coordinate_columns].apply(
+        lambda x: str(int(x["Breitengrad"] * 100000))
+        + str(int(x["Längengrad"] * 100000)).replace("-", "1"),
+        axis=1,
+    )
+    column_data["geolocation_id"] = column_data.apply(
+        lambda x: "A" + str(x[ai]).zfill(6)[0:6] + "S" + str(x[coi]),
+        axis=1,
+    )
+
+    address_data = column_data[address_columns + [ai]]
+    address_data = (
+        address_data.drop_duplicates().rename(columns={ai: "id"}).set_index("id")
+    )
+
+    coordinate_data = column_data[coordinate_columns + [coi]]
+    coordinate_data = (
+        coordinate_data.drop_duplicates().rename(columns={coi: "id"}).set_index("id")
+    )
 
     opening_times_map = {
         "Keine Angabe": None,
@@ -234,12 +250,25 @@ def get_normalised_data(download_date: tuple = None):
     column_data["Öffnungszeiten"] = column_data["Öffnungszeiten"].apply(
         lambda x: opening_times_map.get(x, x)
     )
+    # If the coordinate and the address pair points to a single row, it means that the coordinate points to the column!
+    column_data["coord_points_column"] = ~column_data.duplicated(subset=[ai, coi])
+    # Address has multiple columns
+    column_data["facility_has_multiple_columns"] = column_data.duplicated(subset=[ai])
+    # If the coordinate and the address pair points to multiple columns, it means that the coordinate points to the facility!
+    # If the pair is unique and the facility has one column, the coordinate also points to the facility
+    column_data["coord_points_facility"] = (
+        column_data.duplicated(subset=[ai, coi])
+        | ~column_data["facility_has_multiple_columns"]
+    )
+
     facility_columns = [
         "operator_id",
-        "geolocation_id",
+        coi,
+        ai,
         "Öffnungszeiten",
         "Öffnungszeiten: Wochentage",
         "Öffnungszeiten: Tageszeiten",
+        "coord_points_facility",
     ]
     facility_data_pre = (
         column_data[facility_columns]
@@ -247,36 +276,70 @@ def get_normalised_data(download_date: tuple = None):
         .drop(columns=["id"])
         .drop_duplicates()
     )
-    dup_filter = facility_data_pre.duplicated(
-        subset=["operator_id", "geolocation_id"], keep=False
-    )
+    dup_filter = facility_data_pre.duplicated(subset=["operator_id", ai], keep=False)
     duplicated = (
-        facility_data_pre[dup_filter]
-        .groupby(["operator_id", "geolocation_id"])
-        .agg("first")
+        facility_data_pre[dup_filter].groupby(["operator_id", ai]).agg("first")
     ).reset_index()
     uniques = facility_data_pre[~dup_filter]
 
     facility_data = pd.concat([uniques, duplicated])
     facility_data["id"] = facility_data.apply(
-        lambda row: str(row["operator_id"]).zfill(6) + str(row["geolocation_id"]).zfill(6),
+        lambda row: str(row["operator_id"]).zfill(6) + str(row[ai]).zfill(6)[:6],
         axis=1,
     )
+    facility_data[coi] = facility_data.apply(
+        lambda row: row[coi] if row["coord_points_facility"] else None, axis=1
+    )
     column_data = column_data.join(
-        facility_data[["operator_id", "geolocation_id", "id"]].set_index(
-            ["operator_id", "geolocation_id"]
-        ),
-        on=["operator_id", "geolocation_id"],
+        facility_data[["operator_id", ai, "id"]].set_index(["operator_id", ai]),
+        on=["operator_id", ai],
         how="left",
     ).rename(columns={"id": "facility_id"})
 
-    facility_data = facility_data.set_index("id")
-    column_data = column_data.drop(columns=facility_columns)
-    column_data = column_data[
-        [column_data.columns[-1]] + list(column_data.columns[:-1])
-    ]
+    column_data[coi] = column_data.apply(
+        lambda row: row[coi] if row["coord_points_column"] else None, axis=1
+    )
+    column_data["geolocation_id"] = column_data.apply(
+        lambda x: "A"
+        + str(x[ai]).zfill(6)[0:6]
+        + "S"
+        + str(x[coi]).replace("None", "").zfill(14),
+        axis=1,
+    )
 
-    geolocation_data.drop(columns=["identifier"], inplace=True)
+    facility_data["geolocation_id"] = facility_data.apply(
+        lambda x: "A"
+        + str(x[ai]).zfill(6)[0:6]
+        + "S"
+        + str(x[coi]).replace("None", "").zfill(14),
+        axis=1,
+    )
+
+    facility_data = facility_data.set_index("id")
+
+    geolocation_data = pd.concat(
+        [
+            column_data[["geolocation_id", ai, coi]],
+            facility_data[["geolocation_id", ai, coi]],
+        ]
+    )
+    geolocation_data = (
+        geolocation_data.drop_duplicates()
+        .rename(columns={"geolocation_id": "id"})
+        .set_index("id")
+    )
+    column_data = column_data.drop(
+        columns=facility_columns
+        + all_locations
+        + ["coord_points_column", "facility_has_multiple_columns"]
+    )
+    facility_data = facility_data.drop(columns=[coi, ai, "coord_points_facility"])
+    facility_data = facility_data[
+        [facility_data.columns[-1]] + list(facility_data.columns[:-1])
+    ]
+    column_data = column_data[
+        list(column_data.columns[-2:]) + list(column_data.columns[:-2])
+    ]
 
     # Annotate
     # get annotated fields
@@ -316,6 +379,10 @@ def get_normalised_data(download_date: tuple = None):
                 {
                     "fields": [fi],
                     "reference": {"resource": operator_filename, "fields": ["id"]},
+                },
+                {
+                    "fields": [gi],
+                    "reference": {"resource": geolocation_filename, "fields": ["id"]},
                 },
             ],
         },
@@ -374,7 +441,8 @@ def get_normalised_data(download_date: tuple = None):
     reference_fields = {
         "P1 [kW]": "Leistungskapazität",
         "Public Key1": "Key",
-    }  # "Steckertypen1": "Steckertypen",
+    }
+    # "Steckertypen1": "Steckertypen",
     annotation_fields = {
         f["name"]: f
         for f in annotations["resources"][0]["schema"]["fields"]
@@ -433,10 +501,13 @@ def get_normalised_data(download_date: tuple = None):
         "path": f"{operator_filename}.csv",
         "format": "csv",
         "encoding": "utf-8",
-        "schema": {"fields": operator_fields_list, "primaryKey": ["id"]},
+        "schema": {
+            "fields": operator_fields_list,
+            "primaryKey": ["id"],
+        },
     }
 
-    location_schema = fl.Schema.describe(location_data)
+    location_schema = fl.Schema.describe(geolocation_data)
     location_dict = location_schema.to_dict()
 
     location_fields = OrderedDict({f["name"]: f for f in location_dict["fields"]})
@@ -459,7 +530,20 @@ def get_normalised_data(download_date: tuple = None):
         "path": f"{geolocation_filename}.csv",
         "format": "csv",
         "encoding": "utf-8",
-        "schema": {"fields": location_fields_list, "primaryKey": ["id"]},
+        "schema": {
+            "fields": location_fields_list,
+            "primaryKey": ["id"],
+            "foreignKeys": [
+                {
+                    "fields": [ai],
+                    "reference": {"resource": address_filename, "fields": ["id"]},
+                },
+                {
+                    "fields": [coi],
+                    "reference": {"resource": coordinate_filename, "fields": ["id"]},
+                },
+            ],
+        },
     }
     # socket data
     socket_schema = fl.Schema.describe(socket_data)
@@ -542,6 +626,65 @@ def get_normalised_data(download_date: tuple = None):
             ],
         },
     }
+    # address data
+    address_schema = fl.Schema.describe(address_data)
+    address_dict = address_schema.to_dict()
+
+    address_fields = OrderedDict({f["name"]: f for f in address_dict["fields"]})
+
+    annotation_fields = {
+        f["name"]: f
+        for f in annotations["resources"][0]["schema"]["fields"]
+        if f["name"] in address_fields.keys()
+    }
+    annotation_fields["id"] = {"description": "Unique identifier"}
+    for k, v in annotation_fields.items():
+        address_fields[k].update(v)
+    if "id" in address_fields:
+        if "constraints" in address_fields["id"]:
+            address_fields["id"].pop("constraints")
+    address_fields_list = [v for v in address_fields.values()]
+    address_resource = {
+        "profile": "tabular-data-resource",
+        "name": address_filename,
+        "path": f"{address_filename}.csv",
+        "format": "csv",
+        "encoding": "utf-8",
+        "schema": {
+            "fields": address_fields_list,
+            "primaryKey": ["id"],
+        },
+    }
+
+    # coord data
+    coordinate_schema = fl.Schema.describe(coordinate_data)
+    coordinate_dict = coordinate_schema.to_dict()
+
+    coordinate_fields = OrderedDict({f["name"]: f for f in coordinate_dict["fields"]})
+
+    annotation_fields = {
+        f["name"]: f
+        for f in annotations["resources"][0]["schema"]["fields"]
+        if f["name"] in coordinate_fields.keys()
+    }
+    annotation_fields["id"] = {"description": "Unique identifier"}
+    for k, v in annotation_fields.items():
+        coordinate_fields[k].update(v)
+    if "id" in coordinate_fields:
+        if "constraints" in coordinate_fields["id"]:
+            coordinate_fields["id"].pop("constraints")
+    coordinate_fields_list = [v for v in coordinate_fields.values()]
+    coordinate_resource = {
+        "profile": "tabular-data-resource",
+        "name": coordinate_filename,
+        "path": f"{coordinate_filename}.csv",
+        "format": "csv",
+        "encoding": "utf-8",
+        "schema": {
+            "fields": coordinate_fields_list,
+            "primaryKey": ["id"],
+        },
+    }
 
     annotations_new = deepcopy(annotations)
     annotations_new["name"] = f"{NORMALIZED_FILENAME.format(mm=mm, dd=dd, yyyy=yyyy)}"
@@ -558,6 +701,8 @@ def get_normalised_data(download_date: tuple = None):
         geolocation_resource,
         socket_resource,
         compatibility_resource,
+        address_resource,
+        coordinate_resource,
     ]
 
     data = {
@@ -568,6 +713,8 @@ def get_normalised_data(download_date: tuple = None):
         "geolocation": geolocation_data,
         "socket": socket_data,
         "compatibility": compatibility_data,
+        "address": address_data,
+        "coordinate": coordinate_data,
     }
     filenames = {
         "column": column_filename,
@@ -577,6 +724,8 @@ def get_normalised_data(download_date: tuple = None):
         "geolocation": geolocation_filename,
         "socket": socket_filename,
         "compatibility": compatibility_filename,
+        "address": address_filename,
+        "coordinate": coordinate_filename,
     }
     return data, filenames, annotations_new, (dd, mm, yyyy)
 
