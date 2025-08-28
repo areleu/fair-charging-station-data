@@ -5,13 +5,12 @@ from pathlib import Path
 from normalise import get_normalised_data
 from annotate import annotate
 import json
-from pandas import DataFrame
 
 DEBUG = False
 OEP = False  # The OEP format is not entirely compatible with frictionless, change to False to generate a frictionless dataset.
 
 DEFAULT_DIR = "default"
-OPERATIONAL_BASE = "operational"
+OUTPUT_BASE = "operational"
 OEP_NORMAL_FILENAME = "bnetza_charging_stations_normalised_{dd}_{mm}_{yyyy}"
 OEP_REGULAR_FILEANAME = "bnetza_charging_stations_{dd}_{mm}_{yyyy}"
 
@@ -273,24 +272,22 @@ def get_renamed_annotated(download_date: tuple = None, oep=True):
     return station_data, station_filename, station_compiled_metadata, (dd, mm, yyyy)
 
 
-def main():
+def rename_bnetza(output_path: str):
     data, filenames, normalised_compiled_metadata, (dd, mm, yyyy) = (
         get_renamed_normalised(oep=OEP)
     )
-    operational_name = Path(f"{OPERATIONAL_BASE}").joinpath(
-        f"DE-{yyyy}{mm}{dd}-BNETZA-BNETZA"
-    )
-    if not operational_name.exists():
-        operational_name.mkdir(exist_ok=True, parents=True)
+    output_name = Path(f"{output_path}").joinpath(f"DE-{yyyy}{mm}{dd}-BNETZA-BNETZA")
+    if not output_name.exists():
+        output_name.mkdir(exist_ok=True, parents=True)
     if not DEBUG:
         for element in data.keys():
             data[element].to_csv(
-                operational_name.joinpath(f"{filenames[element]}.csv"),
+                output_name.joinpath(f"{filenames[element]}.csv"),
                 date_format="%Y-%m-%d %H:%M:%S",
             )
 
         with open(
-            operational_name.joinpath(
+            output_name.joinpath(
                 f"{OEP_NORMAL_FILENAME.format(mm=mm, dd=dd, yyyy=yyyy)}.json"
             ),
             "w",
@@ -323,4 +320,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    rename_bnetza(OUTPUT_BASE)
