@@ -177,9 +177,11 @@ def process_all_resources(data, normalised_compiled_metadata, oep, dd, mm, yyyy)
     return {key: filename for key, filename in resource_filenames}
 
 
-def get_renamed_normalised(download_date: tuple = None, oep=True):
+def get_renamed_normalised(
+    filename: str | None = None, download_date: tuple | None = None, oep=True
+):
     data, filenames, normalised_compiled_metadata, (dd, mm, yyyy) = get_normalised_data(
-        download_date
+        filename, download_date
     )
 
     # Rename data columns
@@ -202,9 +204,11 @@ def get_renamed_normalised(download_date: tuple = None, oep=True):
     return data, new_filenames, normalised_compiled_metadata, (dd, mm, yyyy)
 
 
-def get_renamed_annotated(download_date: tuple = None, oep=True):
+def get_renamed_annotated(
+    filename: str | None = None, download_date: tuple | None = None, oep=True
+):
     station_data, station_filename, station_compiled_metadata, (dd, mm, yyyy) = (
-        annotate(download_date)
+        annotate(filename, download_date)
     )
 
     station_data = station_data.rename(columns=COLUMN_RENAME)
@@ -272,9 +276,13 @@ def get_renamed_annotated(download_date: tuple = None, oep=True):
     return station_data, station_filename, station_compiled_metadata, (dd, mm, yyyy)
 
 
-def rename_bnetza(output_path: str):
+def get_renamed_bnetza(
+    output_path: str,
+    filename: str | None = None,
+    download_date: tuple | None = None,
+):
     data, filenames, normalised_compiled_metadata, (dd, mm, yyyy) = (
-        get_renamed_normalised(oep=OEP)
+        get_renamed_normalised(filename=filename, download_date=download_date, oep=OEP)
     )
     output_name = Path(f"{output_path}").joinpath(f"DE-{yyyy}{mm}{dd}-BNETZA-BNETZA")
     if not output_name.exists():
@@ -298,7 +306,7 @@ def rename_bnetza(output_path: str):
             )
 
     station_data, station_filename, station_compiled_metadata, (dd, mm, yyyy) = (
-        get_renamed_annotated(oep=OEP)
+        get_renamed_annotated(filename=filename, download_date=download_date, oep=OEP)
     )
 
     if not (p := Path(f"{DEFAULT_DIR}")).exists():
@@ -320,4 +328,4 @@ def rename_bnetza(output_path: str):
 
 
 if __name__ == "__main__":
-    rename_bnetza(OUTPUT_BASE)
+    get_renamed_bnetza(OUTPUT_BASE)

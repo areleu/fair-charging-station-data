@@ -15,12 +15,13 @@ if not path.exists(INPUT_METADATA_FILE):
     INPUT_METADATA_FILE = "bnetza/metadata.yaml"
 
 
-
-def annotate(download_date: tuple = None):
+def annotate(filename: str | None = None, download_date: tuple | None = None):
     if not path.exists(f"{FAIRDIR}"):
         mkdir(FAIRDIR)
 
-    df, filename, (dd, mm, yyyy) = get_clean_data(download_date)  # If you want a specific date write the it in the forma (dd, mm, yyyy) ex: (1,2,2023)
+    df, filename, (dd, mm, yyyy) = get_clean_data(
+        filename, download_date
+    )  # If you want a specific date write the it in the forma (dd, mm, yyyy) ex: (1,2,2023)
 
     # get current file schema
     schema = fl.Schema.describe(f"{FAIRDIR}/{filename}.csv")
@@ -62,11 +63,12 @@ def annotate(download_date: tuple = None):
     return df, filename, annotations, (dd, mm, yyyy)
 
 
-
 def main():
     _, filename, annotations, (_, _, _) = annotate()
 
     with open(f"{FAIRDIR}/{filename}.json", "w", encoding="utf8") as output:
         json.dump(annotations, output, indent=4, ensure_ascii=False)
+
+
 if __name__ == "__main__":
     main()

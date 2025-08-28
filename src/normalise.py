@@ -105,8 +105,10 @@ def process_resources(data_dict, annotations, filenames, foreign_key_map):
     return resources
 
 
-def get_normalised_data(download_date: tuple = None):
-    df, filename, (dd, mm, yyyy) = get_clean_data(download_date)
+def get_normalised_data(
+    filename: str | None = None, download_date: tuple | None = None
+):
+    df, filename, (dd, mm, yyyy) = get_clean_data(filename, download_date)
 
     df = df.set_index("Ladeeinrichtungs-ID")
     df.index.name = "id"

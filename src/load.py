@@ -8,7 +8,7 @@ FILENAME = "bnetza_charging_stations_raw_{MM}_{YYYY}.xlsx"
 DATA_DIRECTORY = "sources/BNETZA"
 
 
-def get_raw(dd_mm_yyyy: tuple = None):
+def get_raw(dd_mm_yyyy: tuple | None = None):
     if dd_mm_yyyy is None:
         _, mm, yyyy = datetime.today().strftime("%d-%m-%Y").split("-")
     else:
@@ -19,7 +19,9 @@ def get_raw(dd_mm_yyyy: tuple = None):
     if not path.exists(file_path):
         file_path = path.join("..", file_path)
     if not path.exists(file_path):
-        raise IOError(f"File {file_path} not found. You have to manually download the file from the BNetzA webpage(see README) and save it as: {file_path}")
+        raise IOError(
+            f"File {file_path} not found. You have to manually download the file from the BNetzA webpage(see README) and save it as: {file_path}"
+        )
     return file_path
 
 

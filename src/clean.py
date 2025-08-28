@@ -10,12 +10,14 @@ INPUT_METADATA_FILE = "metadata.yaml"
 FAIRDIR = "fair"
 
 
-def get_clean_data(download_date: tuple = None):
+def get_clean_data(filename: str | None = None, download_date: tuple | None = None):
     if not path.exists(FAIRDIR):
         mkdir(FAIRDIR)
 
-    raw = get_raw(download_date)
-    excel = pd.ExcelFile(raw)
+    if filename is None:
+        filename = get_raw(download_date)
+
+    excel = pd.ExcelFile(filename)
 
     # Get current stand information
     dd, mm, yyyy = pd.read_excel(excel, nrows=10).iloc[6, 0].split(" ")[-1].split(".")
@@ -51,10 +53,7 @@ def get_clean_data(download_date: tuple = None):
         # The version from 16.07.2024 has a format issue in one entry that breaks this part of the script
         # because of this we strip
         df["Breitengrad"] = (
-            df["Breitengrad"]
-            .astype("string")
-            .str.replace(",", ".")
-            .str.strip(".")
+            df["Breitengrad"].astype("string").str.replace(",", ".").str.strip(".")
         )
         df["Längengrad"] = (
             df["Längengrad"].astype("string").str.replace(",", ".").astype(float)
