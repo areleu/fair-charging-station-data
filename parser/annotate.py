@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: Copyright (c) 2023 German Aerospace Center (DLR)
 # SPDX-License-Identifier: BSD-3-Clause
 
-from clean import get_clean_data, FAIRDIR
+from .clean import get_clean_data, FAIRDIR
 import frictionless as fl
 import yaml
 from collections import OrderedDict

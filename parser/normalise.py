@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: Copyright (c) 2023 German Aerospace Center (DLR)
 # SPDX-License-Identifier: BSD-3-Clause
 
-from annotate import get_clean_data, INPUT_METADATA_FILE
+from .annotate import get_clean_data, INPUT_METADATA_FILE
 import pandas as pd
 import yaml
 import frictionless as fl

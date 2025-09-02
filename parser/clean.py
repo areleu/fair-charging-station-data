@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: Copyright (c) 2023 German Aerospace Center (DLR)
 # SPDX-License-Identifier: BSD-3-Clause
 
-from load import get_raw
+from .load import get_raw
 import pandas as pd
 from os import path, mkdir
 

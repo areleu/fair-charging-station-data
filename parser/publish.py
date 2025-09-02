@@ -6,7 +6,7 @@ import json
 from random import randint
 from getpass import getpass
 from os import environ
-from rename import get_renamed_annotated
+from .rename import get_renamed_annotated
 import requests as req
 from oep_client import OepClient
 from json import loads, dumps

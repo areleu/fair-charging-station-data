@@ -2,15 +2,14 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 from pathlib import Path
-from normalise import get_normalised_data
-from annotate import annotate
+from .normalise import get_normalised_data
+from .annotate import annotate
 import json
 
 DEBUG = False
 OEP = False  # The OEP format is not entirely compatible with frictionless, change to False to generate a frictionless dataset.
 
 DEFAULT_DIR = "default"
-OUTPUT_BASE = "operational"
 OEP_NORMAL_FILENAME = "bnetza_charging_stations_normalised_{dd}_{mm}_{yyyy}"
 OEP_REGULAR_FILEANAME = "bnetza_charging_stations_{dd}_{mm}_{yyyy}"
 
@@ -325,7 +324,3 @@ def get_renamed_bnetza(
         encoding="utf8",
     ) as output:
         json.dump(station_compiled_metadata, output, indent=4, ensure_ascii=False)
-
-
-if __name__ == "__main__":
-    get_renamed_bnetza(OUTPUT_BASE)

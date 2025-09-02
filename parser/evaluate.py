@@ -5,9 +5,9 @@ import requests
 import json
 import jsonschema_rs
 from pathlib import Path
-from clean import get_clean_data, FAIRDIR
-from normalise import NORMALIZED_FILENAME, NORMALISEDIR
-from rename import (
+from .clean import get_clean_data, FAIRDIR
+from .normalise import NORMALIZED_FILENAME, NORMALISEDIR
+from .rename import (
     OEP_REGULAR_FILEANAME,
     OEP_NORMAL_FILENAME,
     OEPDIR_DEFAULT,
