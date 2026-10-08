@@ -35,14 +35,46 @@ CONNECTION_TYPE_MAP = {
 }
 
 
+def describe_schema(data):
+    """Schema fields from the DataFrame dtypes.
+
+    Reproduces the field types of the frictionless pandas describe used
+    for the published parsed outputs (integer, number, boolean,
+    datetime, string); frictionless 5 no longer ships a pandas plugin,
+    and describing the records themselves misinfers all-null columns.
+    """
+    fields = []
+    # The named index (the "id" of most resources) is written to the
+    # CSV, so it is described first, exactly as the pandas-based
+    # describe did.
+    if data.index.name is not None:
+        fields.append(_field_for(data.index.name, data.index.dtype))
+    for name, dtype in data.dtypes.items():
+        fields.append(_field_for(name, dtype))
+    return {"fields": fields}
+
+
+def _field_for(name, dtype):
+    if pd.api.types.is_integer_dtype(dtype):
+        field_type = "integer"
+    elif pd.api.types.is_float_dtype(dtype):
+        field_type = "number"
+    elif pd.api.types.is_bool_dtype(dtype):
+        field_type = "boolean"
+    elif pd.api.types.is_datetime64_any_dtype(dtype):
+        field_type = "datetime"
+    else:
+        field_type = "string"
+    return {"name": str(name), "type": field_type}
+
+
 def describe_and_annotate(
     data, annotations, resource_name, primary_key, foreign_keys=None
 ):
     """
     Describe the schema of the data, annotate it, and return the resource dictionary.
     """
-    schema = fl.Schema.describe(data)
-    schema_dict = schema.to_dict()
+    schema_dict = describe_schema(data)
 
     fields = OrderedDict({f["name"]: f for f in schema_dict["fields"]})
     annotation_fields = {
@@ -185,7 +217,13 @@ def get_normalised_data(
     )
     point_data["power_temp"] = (
         point_data["Leistungskapazität"]
+        # Older pandas stringified missing values in astype(str); the
+        # string dtype keeps them as NA, which .str.split passes
+        # through and the map below cannot iterate. Restore the old
+        # behaviour so the parsed output does not depend on the
+        # pandas version.
         .astype(str)
+        .fillna("nan")
         .str.split(";")
         .map(lambda x: [y.replace(",", ".").strip() for y in x])
     )
@@ -211,7 +249,7 @@ def get_normalised_data(
     socket_data[["current", "pattern", "connector", "power"]] = socket_data[
         "name"
     ].str.split("_", expand=True)
-    socket_data = socket_data.applymap(lambda v: v if v != "None" else None)
+    socket_data = socket_data.map(lambda v: v if v != "None" else None)
     socket_data.index.name = "id"
 
     compatibility_base = pd.DataFrame(
@@ -278,10 +316,17 @@ def get_normalised_data(
     coordinate_columns = ["Breitengrad", "Längengrad"]
     all_locations = address_columns + coordinate_columns
 
-    column_data["Postleitzahl"] = column_data["Postleitzahl"].astype(str)
-    column_data["Hausnummer"] = column_data["Hausnummer"].astype(str)
+    # Same pandas-version guard as above: the address hash below
+    # stringifies values, and NA would hash differently than the
+    # "nan" the published pipeline produced.
+    column_data["Postleitzahl"] = (
+        column_data["Postleitzahl"].astype(str).fillna("nan")
+    )
+    column_data["Hausnummer"] = (
+        column_data["Hausnummer"].astype(str).fillna("nan")
+    )
     column_data[address_columns] = column_data[address_columns].apply(
-        lambda x: x.str.strip()
+        lambda x: x.fillna("nan").str.strip()
     )
 
     column_data[ai] = column_data[address_columns].apply(
